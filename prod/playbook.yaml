@@ -12,24 +12,3 @@
     - name: Upgrade all packages
       apt:
         upgrade: dist
-        
-    - name: Set GPT label using parted
-      parted:
-        device: "/dev/sdb"  # Replace with the actual device name (e.g., /dev/sda)
-        number: 1  # Replace with the partition number
-        label: gpt
-
-    - name: Create a partition using parted
-      parted:
-        device: "/dev/sdb"  # Replace with the actual device name (e.g., /dev/sda)
-        number: 1  # Replace with the partition number
-        state: present
-        part_end: 100%  # Replace with the desired end size or location
-    - name: Format the partition as ext4
-      filesystem:
-        fstype: ext4
-        dev: "/dev/sdb1"
-    - name: Add the partition to /etc/fstab
-      lineinfile:
-        path: /etc/fstab
-        line: "/dev/sdb1   /mnt/data   ext4   defaults   0   2"
