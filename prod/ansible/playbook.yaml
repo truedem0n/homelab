@@ -12,3 +12,10 @@
     - name: Upgrade all packages
       apt:
         upgrade: dist
+
+    - name: Set permissions and ownership on the mount point directory
+      file:
+        path: /mnt/data  # Replace with the actual mount point directory
+        owner: skylord  # Replace with the desired owner
+        group: skylord  # Replace with the desired group
+        mode: "0777"  # Replace with the desired permissions
