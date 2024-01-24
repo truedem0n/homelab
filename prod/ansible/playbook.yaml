@@ -41,6 +41,7 @@
       get_url:
         url: "https://dockge.kuma.pet/compose.yaml?port=5001&stacksPath=/mnt/data/docker/compose"
         dest: /tmp/compose.yaml
+      when: flag_file.stat.exists == false
 
     - name: Create the flag file
       file:
