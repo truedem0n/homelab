@@ -13,9 +13,38 @@
       apt:
         upgrade: dist
 
+    - name: Check if the flag file exists
+      stat:
+        path: /ansible/ansible_first_run.flag
+      register: flag_file
+
+    # - name: Perform tasks for the first run
+    #   debug:
+    #     msg: "This is the first Ansible run"
+    #   when: flag_file.stat.exists == false
+
     - name: Set permissions and ownership on the mount point directory
       file:
-        path: /mnt/data  # Replace with the actual mount point directory
-        owner: skylord  # Replace with the desired owner
-        group: skylord  # Replace with the desired group
-        mode: "0777"  # Replace with the desired permissions
+        path: /mnt/data  
+        owner: skylord  
+        group: skylord  
+        mode: "0777"  
+    - name: Create directory /opt/dockge
+      file:
+        path: /opt/dockge
+        state: directory
+        owner: skylord  
+        group: skylord  
+        mode: "0755"  
+
+    - name: Download compose.yaml file
+      get_url:
+        url: "https://dockge.kuma.pet/compose.yaml?port=5001&stacksPath=/mnt/data/docker/compose"
+        dest: /tmp/compose.yaml
+
+    - name: Create the flag file
+      file:
+        path: /ansible/ansible_first_run.flag
+        state: touch
+      when: flag_file.stat.exists == false
+    
