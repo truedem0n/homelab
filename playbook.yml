@@ -1,6 +1,7 @@
 ---
-- name: Update and upgrade Ubuntu packages
-  hosts: your_ubuntu_servers
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+  connection: local
   become: yes
   tasks:
     - name: Update package cache
