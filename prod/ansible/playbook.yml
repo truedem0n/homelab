@@ -22,6 +22,11 @@
     #   debug:
     #     msg: "This is the first Ansible run"
     #   when: flag_file.stat.exists == false
+    - name: Create directory recursively
+      file:
+        path: /mnt/data
+        state: directory
+        recurse: yes
 
     - name: Set permissions and ownership on the mount point directory
       file:
