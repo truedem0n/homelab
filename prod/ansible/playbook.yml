@@ -46,6 +46,15 @@
         owner: skylord  
         group: skylord  
         mode: "0777"  
+
+    - name: Mount the volume
+      mount:
+        path: /mnt/data 
+        src: /dev/sdb1  # Replace with your actual device
+        fstype: ext4    # Replace with the file system type
+        opts: defaults
+        state: mounted
+
     - name: Create directory /opt/dockge
       file:
         path: /opt/dockge
@@ -58,16 +67,40 @@
       get_url:
         url: "https://dockge.kuma.pet/compose.yaml?port=5001&stacksPath=/mnt/data/docker/compose"
         dest: /tmp/compose.yaml
-      when: flag_file.stat.exists == false
+      # when: flag_file.stat.exists == false
 
-    - name: Create the flag file
-      file:
-        path: /ansible/ansible_first_run.flag
-        state: touch
-      when: flag_file.stat.exists == false
+    - name: Run docker-compose up -d
+      shell: |
+        docker-compose up -d
+      become_user: root
+      args:
+        chdir: /tmp/
+
+    - name: Create Docker volume
+      docker_volume:
+        name: portainer_data
+    
+    - name: Run Portainer container
+      docker_container:
+        name: portainer
+        image: portainer/portainer-ce:latest
+        detach: yes
+        restart_policy: always
+        ports:
+          - "8000:8000"
+          - "9443:9443"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+          - "portainer_data:/data"
+        container_default_behavior: 'compatibility'
 
     - name: Start Docker service
       systemd:
         name: docker
         state: started
     
+    - name: Create the flag file
+      file:
+        path: /ansible/ansible_first_run.flag
+        state: touch
+      when: flag_file.stat.exists == false
