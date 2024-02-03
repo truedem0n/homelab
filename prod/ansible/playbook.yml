@@ -63,18 +63,25 @@
         group: skylord  
         mode: "0755"  
 
-    - name: Download compose.yaml file
-      get_url:
-        url: "https://dockge.kuma.pet/compose.yaml?port=5001&stacksPath=/mnt/data/docker/compose"
-        dest: /tmp/compose.yaml
-      # when: flag_file.stat.exists == false
+    - name: Create Dockge Docker volume
+      docker_volume:
+        name: dockge_data
 
-    - name: Run docker-compose up -d
-      shell: |
-        docker-compose up -d
-      become_user: root
-      args:
-        chdir: /tmp/
+    - name: Deploy Dockge Container
+      docker_container:
+        name: dockge
+        image: louislam/dockge:1
+        state: started
+        restart_policy: unless-stopped
+        detach: yes
+        ports:
+          - "5001:5001"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - dockge_data:/app/data
+          - /mnt/data/docker/compose:/mnt/data/docker/compose
+        env:
+          DOCKGE_STACKS_DIR: /mnt/data/docker/compose
 
     - name: Create Docker volume
       docker_volume:
