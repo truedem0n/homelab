@@ -19,6 +19,11 @@
           - docker
           - docker-compose
         state: present
+    
+    - name: Disable Docker service from starting at boot
+      systemd:
+        name: docker
+        enabled: no
 
     - name: Check if the flag file exists
       stat:
@@ -60,4 +65,9 @@
         path: /ansible/ansible_first_run.flag
         state: touch
       when: flag_file.stat.exists == false
+
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
     
