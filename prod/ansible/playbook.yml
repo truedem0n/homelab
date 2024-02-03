@@ -12,6 +12,13 @@
     - name: Upgrade all packages
       apt:
         upgrade: dist
+    
+    - name: Install packages
+      apt:
+        name:
+          - docker
+          - docker-compose
+        state: present
 
     - name: Check if the flag file exists
       stat:
