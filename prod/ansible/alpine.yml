@@ -1,0 +1,21 @@
+---
+- name: Update and upgrade Alpine packages locally
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: no  # Disable gathering facts
+  tasks:
+    - name: Update package cache
+      apk:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apk:
+        upgrade: yes
+    
+    - name: Install packages
+      apk:
+        name:
+          - docker
+          - docker-compose
+        state: present
