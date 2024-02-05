@@ -18,7 +18,7 @@
         name:
           - docker
           - docker-compose
-          - py3-pip
+          - py3-requests
         state: present
     
     - name: Schedule playbook to run every 5 minutes
