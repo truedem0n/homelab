@@ -18,4 +18,4 @@
         name:
           - docker
           - docker-compose
-        state: present
+        state: absent
