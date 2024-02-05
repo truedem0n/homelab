@@ -98,7 +98,7 @@
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
         container_default_behavior: 'compatibility'
-        when: flag_file.stat.exists == false
+      when: flag_file.stat.exists == false
     
     - name: Run Portainer container
       docker_container:
@@ -113,7 +113,7 @@
           - "/var/run/docker.sock:/var/run/docker.sock"
           - "/mnt/data/docker/containers/portainer/data/:/data"
         container_default_behavior: 'compatibility'
-        when: flag_file.stat.exists == false
+      when: flag_file.stat.exists == false
 
     - name: Start Docker service
       service:
