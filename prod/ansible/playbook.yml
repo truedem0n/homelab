@@ -96,7 +96,7 @@
           - "5001:5001"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
-          - dockge_data:/app/data
+          - /mnt/data/docker/dockge/app/data:/app/data
           - /mnt/data/docker/compose:/mnt/data/docker/compose
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
