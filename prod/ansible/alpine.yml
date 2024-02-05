@@ -18,4 +18,132 @@
         name:
           - docker
           - docker-compose
-        state: absent
+        state: present
+    
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run Ansible playbook every 5 minutes"
+        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/alpine.yml"
+        minute: "*/5"
+
+    - name: Schedule playbook to run at reboot
+      cron:
+        name: "Run Ansible playbook at reboot"
+        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/alpine.yml"
+        special_time: "reboot"
+
+    - name: Disable Docker service from starting at boot
+      ini_file:
+        path: /etc/rc.conf
+        section: docker
+        option: enable
+        value: "NO"
+        backup: yes
+      notify: Restart Docker
+
+    - name: Check if the flag file exists
+      stat:
+        path: /ansible/ansible_first_run.flag
+      register: flag_file
+
+    - name: Create directory recursively
+      file:
+        path: /ansible/
+        state: directory
+        recurse: yes
+
+    - name: Create directory recursively
+      file:
+        path: /mnt/data
+        state: directory
+        recurse: yes
+
+    - name: Set permissions and ownership on the mount point directory
+      file:
+        path: /mnt/data  
+        owner: skylord  
+        group: skylord  
+        mode: "0777"  
+
+    - name: Mount the volume
+      mount:
+        path: /mnt/data 
+        src: /dev/sdb1
+        fstype: ext4
+        opts: defaults
+        state: mounted
+
+    - name: Create directory /opt/dockge
+      file:
+        path: /opt/dockge
+        state: directory
+        owner: skylord  
+        group: skylord  
+        mode: "0755"  
+
+    - name: Create Dockge Docker volume
+      docker_volume:
+        name: dockge_data
+
+    - name: Deploy Dockge Container
+      docker_container:
+        name: dockge
+        image: louislam/dockge:1
+        state: started
+        restart_policy: unless-stopped
+        detach: yes
+        ports:
+          - "5001:5001"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /mnt/data/docker/dockge/app/data:/app/data
+          - /mnt/data/docker/compose:/mnt/data/docker/compose
+        env:
+          DOCKGE_STACKS_DIR: /mnt/data/docker/compose
+        container_default_behavior: 'compatibility'
+
+    - name: Create Docker volume
+      docker_volume:
+        name: portainer_data
+    
+    - name: Run Portainer container
+      docker_container:
+        name: portainer
+        image: portainer/portainer-ce:latest
+        detach: yes
+        restart_policy: always
+        ports:
+          - "8000:8000"
+          - "9443:9443"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+          - "portainer_data:/data"
+        container_default_behavior: 'compatibility'
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+    
+    - name: Install Tailscale using one-liner command
+      get_url:
+        url: https://tailscale.com/install.sh
+        dest: /tmp/install_tailscale.sh
+        mode: '0755'
+      when: flag_file.stat.exists == false
+
+    - name: Run the Tailscale installation script
+      command: /tmp/install_tailscale.sh
+      when: flag_file.stat.exists == false
+    
+    - name: Create the flag file
+      file:
+        path: /ansible/ansible_first_run.flag
+        state: touch
+      when: flag_file.stat.exists == false
+
+  handlers:
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted
