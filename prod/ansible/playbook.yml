@@ -48,6 +48,12 @@
     #   when: flag_file.stat.exists == false
     - name: Create directory recursively
       file:
+        path: /ansible/
+        state: directory
+        recurse: yes
+
+    - name: Create directory recursively
+      file:
         path: /mnt/data
         state: directory
         recurse: yes
