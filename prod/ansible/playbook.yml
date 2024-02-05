@@ -20,6 +20,18 @@
           - docker-compose
         state: present
     
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run Ansible playbook every 5 minutes"
+        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbook.yml"
+        minute: "*/5"
+
+    - name: Schedule playbook to run at reboot
+      cron:
+        name: "Run Ansible playbook at reboot"
+        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbook.yml"
+        special_time: "reboot"
+
     - name: Disable Docker service from starting at boot
       systemd:
         name: docker
@@ -50,8 +62,8 @@
     - name: Mount the volume
       mount:
         path: /mnt/data 
-        src: /dev/sdb1  # Replace with your actual device
-        fstype: ext4    # Replace with the file system type
+        src: /dev/sdb1
+        fstype: ext4
         opts: defaults
         state: mounted
 
@@ -108,8 +120,15 @@
         state: started
     
     - name: Install Tailscale using one-liner command
-      shell: |
-        curl -fsSL https://tailscale.com/install.sh | sh
+      get_url:
+        url: https://tailscale.com/install.sh
+        dest: /tmp/install_tailscale.sh
+        mode: '0755'
+      when: flag_file.stat.exists == false
+
+    - name: Run the Tailscale installation script
+      command: /tmp/install_tailscale.sh
+      when: flag_file.stat.exists == false
     
     - name: Create the flag file
       file:
