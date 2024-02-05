@@ -82,10 +82,6 @@
         group: skylord  
         mode: "0755"  
 
-    - name: Create Dockge Docker volume
-      docker_volume:
-        name: dockge_data
-
     - name: Deploy Dockge Container
       docker_container:
         name: dockge
@@ -97,15 +93,11 @@
           - "5001:5001"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
-          - /mnt/data/docker/dockge/app/data:/app/data
+          - /mnt/data/docker/containers/dockge/app/data:/app/data
           - /mnt/data/docker/compose:/mnt/data/docker/compose
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
         container_default_behavior: 'compatibility'
-
-    - name: Create Docker volume
-      docker_volume:
-        name: portainer_data
     
     - name: Run Portainer container
       docker_container:
@@ -118,7 +110,7 @@
           - "9443:9443"
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock"
-          - "portainer_data:/data"
+          - "/mnt/data/docker/containers/portainer/data/:/data"
         container_default_behavior: 'compatibility'
 
     - name: Start Docker service
