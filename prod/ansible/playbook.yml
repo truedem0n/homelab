@@ -82,6 +82,7 @@
           - /mnt/data/docker/compose:/mnt/data/docker/compose
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
+        container_default_behavior: 'compatibility'
 
     - name: Create Docker volume
       docker_volume:
@@ -105,6 +106,10 @@
       systemd:
         name: docker
         state: started
+    
+    - name: Install Tailscale using one-liner command
+      shell: |
+        curl -fsSL https://tailscale.com/install.sh | sh
     
     - name: Create the flag file
       file:
