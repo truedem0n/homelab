@@ -19,6 +19,8 @@
           - docker
           - docker-compose
           - py3-requests
+          - htop
+          - bash
         state: present
     
     - name: Schedule playbook to run every 5 minutes
