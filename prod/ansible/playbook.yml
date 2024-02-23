@@ -32,11 +32,6 @@
         job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbook.yml"
         special_time: "reboot"
 
-    - name: Disable Docker service from starting at boot
-      systemd:
-        name: docker
-        enabled: no
-
     - name: Check if the flag file exists
       stat:
         path: /ansible/ansible_first_run.flag
