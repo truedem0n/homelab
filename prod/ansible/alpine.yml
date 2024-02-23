@@ -35,15 +35,6 @@
         job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/alpine.yml"
         special_time: "reboot"
 
-    - name: Disable Docker service from starting at boot
-      ini_file:
-        path: /etc/rc.conf
-        section: docker
-        option: enable
-        value: "NO"
-        backup: yes
-      notify: Restart Docker
-
     - name: Check if the flag file exists
       stat:
         path: /ansible/ansible_first_run.flag
