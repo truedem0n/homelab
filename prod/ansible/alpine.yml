@@ -130,8 +130,11 @@
         state: touch
       when: flag_file.stat.exists == false
     
-    - name: Run Docker image prune
-      command: "y | docker image prune -a"
+    - name: Prune all unused Docker images
+      community.docker.docker_prune:
+        images: yes
+        images_filters:
+          dangling: false
 
   handlers:
     - name: Restart Docker
