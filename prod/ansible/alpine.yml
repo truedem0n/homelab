@@ -129,6 +129,11 @@
         path: /ansible/ansible_first_run.flag
         state: touch
       when: flag_file.stat.exists == false
+    
+    - name: Run Docker image prune
+      command: "docker image prune -a"
+      args:
+        executable: /usr/bin/sudo
 
   handlers:
     - name: Restart Docker
