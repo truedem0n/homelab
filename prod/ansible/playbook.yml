@@ -138,7 +138,7 @@
         state: touch
       when: flag_file.stat.exists == false
 
-    handlers:
+  handlers:
     - name: Restart Docker
       service:
         name: docker
