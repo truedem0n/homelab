@@ -81,10 +81,6 @@
         group: skylord  
         mode: "0755"  
 
-    - name: Create Dockge Docker volume
-      docker_volume:
-        name: dockge_data
-
     - name: Deploy Dockge Container
       docker_container:
         name: dockge
@@ -96,7 +92,7 @@
           - "5001:5001"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
-          - /mnt/data/docker/dockge/app/data:/app/data
+          - /mnt/data/docker/containers/dockge/app/data:/app/data
           - /mnt/data/docker/compose:/mnt/data/docker/compose
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
@@ -141,3 +137,9 @@
         path: /ansible/ansible_first_run.flag
         state: touch
       when: flag_file.stat.exists == false
+
+    handlers:
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted
