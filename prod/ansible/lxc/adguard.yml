@@ -59,13 +59,13 @@
     - name: Schedule playbook to run every 5 minutes
       cron:
         name: "Run Ansible playbook every 5 minutes"
-        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml --config=~/ansible.cfg"
+        job: "/usr/bin/ansible-pull -v -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml"
         minute: "*/5"
 
     - name: Schedule playbook to run at reboot
       cron:
         name: "Run Ansible playbook at reboot"
-        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml --config=~/ansible.cfg"
+        job: "/usr/bin/ansible-pull -v -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml"
         special_time: "reboot"
 
     - name: Create Docker volume
