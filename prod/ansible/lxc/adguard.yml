@@ -32,7 +32,7 @@
         job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml"
         special_time: "reboot"
 
-    - name: Install adguard server
+    # - name: Install adguard server
 
     
     
