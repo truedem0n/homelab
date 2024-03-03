@@ -6,15 +6,15 @@
   gather_facts: no  # Disable gathering facts
   tasks:
     - name: Update package cache
-      apt:
+      apk:
         update_cache: yes
 
     - name: Upgrade all packages
-      apt:
-        upgrade: dist
+      apk:
+        upgrade: yes
     
     - name: Install packages
-      apt:
+      apk:
         name:
           - docker
           - docker-compose
