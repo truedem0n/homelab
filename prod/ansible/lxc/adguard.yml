@@ -55,8 +55,8 @@
           - "80:80/tcp"
           # - "68:68/udp"
           # - "67:67/udp"
-          - "53:53/udp"
-          - "53:53/tcp"
+          - "54:53/udp"
+          - "54:53/tcp"
         volumes:
           - adguard_data:/opt/adguardhome/conf\
           - adguard_data:/opt/adguardhome/work\
