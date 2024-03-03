@@ -98,24 +98,6 @@
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
         container_default_behavior: 'compatibility'
 
-    - name: Create Docker volume
-      docker_volume:
-        name: portainer_data
-    
-    - name: Run Portainer container
-      docker_container:
-        name: portainer
-        image: portainer/portainer-ce:latest
-        detach: yes
-        restart_policy: always
-        ports:
-          - "8000:8000"
-          - "9443:9443"
-        volumes:
-          - "/var/run/docker.sock:/var/run/docker.sock"
-          - "portainer_data:/data"
-        container_default_behavior: 'compatibility'
-
     - name: Start Docker service
       systemd:
         name: docker
