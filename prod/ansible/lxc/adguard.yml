@@ -1,0 +1,38 @@
+---
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: no  # Disable gathering facts
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+    
+    - name: Install packages
+      apt:
+        name:
+          - docker
+          - docker-compose
+        state: present
+    
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run Ansible playbook every 5 minutes"
+        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml"
+        minute: "*/5"
+
+    - name: Schedule playbook to run at reboot
+      cron:
+        name: "Run Ansible playbook at reboot"
+        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml"
+        special_time: "reboot"
+
+    - name: Install adguard server
+
+    
+    
