@@ -6,21 +6,18 @@
   gather_facts: no  # Disable gathering facts
   tasks:
     - name: Update package cache
-      apk:
+      apt:
         update_cache: yes
 
     - name: Upgrade all packages
-      apk:
-        upgrade: yes
+      apt:
+        upgrade: dist
     
     - name: Install packages
-      apk:
+      apt:
         name:
           - docker
           - docker-compose
-          - py3-requests
-          - htop
-          - bash
         state: present
     
     - name: Schedule playbook to run every 5 minutes
