@@ -4,6 +4,13 @@
   connection: local
   become: yes
   gather_facts: no  # Disable gathering facts
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/playbook.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
+    docker_user: "skylord"
+    docker_group: "skylord"
+    tailscale_install_script: "/tmp/install_tailscale.sh"
   tasks:
     - name: Update package cache
       apt:
@@ -13,7 +20,7 @@
       apt:
         upgrade: dist
     
-    - name: Install packages
+    - name: Install Docker and Docker Compose
       apt:
         name:
           - docker
@@ -23,14 +30,16 @@
     - name: Schedule playbook to run every 5 minutes
       cron:
         name: "Run Ansible playbook every 5 minutes"
-        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbook.yml"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }}"
         minute: "*/5"
+        state: present
 
     - name: Schedule playbook to run at reboot
       cron:
         name: "Run Ansible playbook at reboot"
-        job: "/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbook.yml"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }}"
         special_time: "reboot"
+        state: present
 
     - name: Disable Docker service from starting at boot
       systemd:
@@ -39,47 +48,34 @@
 
     - name: Check if the flag file exists
       stat:
-        path: /ansible/ansible_first_run.flag
+        path: "{{ ansible_flag_path }}"
       register: flag_file
 
-    # - name: Perform tasks for the first run
-    #   debug:
-    #     msg: "This is the first Ansible run"
-    #   when: flag_file.stat.exists == false
-    - name: Create directory recursively
+    - name: Create required directories
       file:
-        path: /ansible/
+        path: "{{ item }}"
         state: directory
+        owner: "{{ docker_user }}"
+        group: "{{ docker_group }}"
+        mode: "0755"
         recurse: yes
+      loop:
+        - /ansible/
+        - /mnt/data
+        - /opt/dockge
 
-    - name: Create directory recursively
+    - name: Set permissions on the mount point directory
       file:
         path: /mnt/data
-        state: directory
-        recurse: yes
-
-    - name: Set permissions and ownership on the mount point directory
-      file:
-        path: /mnt/data  
-        owner: skylord  
-        group: skylord  
-        mode: "0777"  
+        mode: "0755"
 
     - name: Mount the volume
       mount:
-        path: /mnt/data 
+        path: /mnt/data
         src: /dev/sdb1
         fstype: ext4
         opts: defaults
         state: mounted
-
-    - name: Create directory /opt/dockge
-      file:
-        path: /opt/dockge
-        state: directory
-        owner: skylord  
-        group: skylord  
-        mode: "0755"  
 
     - name: Deploy Dockge Container
       docker_container:
@@ -96,32 +92,32 @@
           - /mnt/data/docker/compose:/mnt/data/docker/compose
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
-        container_default_behavior: 'compatibility'
 
     - name: Start Docker service
       systemd:
         name: docker
         state: started
-    
-    - name: Install Tailscale using one-liner command
+
+    - name: Download Tailscale installation script
       get_url:
-        url: https://tailscale.com/install.sh
-        dest: /tmp/install_tailscale.sh
+        url: "https://tailscale.com/install.sh"
+        dest: "{{ tailscale_install_script }}"
         mode: '0755'
       when: flag_file.stat.exists == false
 
     - name: Run the Tailscale installation script
-      command: /tmp/install_tailscale.sh
+      command: "{{ tailscale_install_script }}"
       when: flag_file.stat.exists == false
-    
+
     - name: Create the flag file
       file:
-        path: /ansible/ansible_first_run.flag
+        path: "{{ ansible_flag_path }}"
         state: touch
       when: flag_file.stat.exists == false
 
   handlers:
     - name: Restart Docker
-      service:
+      systemd:
         name: docker
         state: restarted
+      listen: "restart_docker"
