@@ -27,19 +27,27 @@
           - docker-compose
         state: present
     
-    - name: Schedule playbook to run every 5 minutes
+    - name: Schedule playbook to run every 5 minutes with logging
       cron:
-        name: "Run Ansible playbook every 5 minutes"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }}"
+        name: "Run Ansible playbook every 5 minutes with logging"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} >> /var/log/ansible-pull.log 2>&1"
         minute: "*/5"
         state: present
 
-    - name: Schedule playbook to run at reboot
+    - name: Schedule playbook to run at reboot with logging
       cron:
-        name: "Run Ansible playbook at reboot"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }}"
+        name: "Run Ansible playbook at reboot with logging"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} >> /var/log/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
+
+    - name: Create log file for ansible-pull
+      file:
+        path: /var/log/ansible-pull.log
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
 
     - name: Disable Docker service from starting at boot
       systemd:
