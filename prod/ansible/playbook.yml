@@ -67,7 +67,7 @@
     - name: Set permissions on the mount point directory
       file:
         path: /mnt/data
-        mode: "0755"
+        mode: "0777"
 
     - name: Mount the volume
       mount:
