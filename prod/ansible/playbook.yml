@@ -26,6 +26,11 @@
           - docker
           - docker-compose
         state: present
+
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
     
     - name: Schedule playbook to run every 5 minutes with logging
       cron:
@@ -54,11 +59,6 @@
         name: docker
         enabled: no
 
-    - name: Check if the flag file exists
-      stat:
-        path: "{{ ansible_flag_path }}"
-      register: flag_file
-
     - name: Create required directories
       file:
         path: "{{ item }}"
@@ -71,6 +71,7 @@
         - /ansible/
         - /mnt/data
         - /opt/dockge
+      when: flag_file.stat.exists == false
 
     - name: Set permissions on the mount point directory
       file:
@@ -78,6 +79,7 @@
         mode: "0777"
         owner: skylord  
         group: skylord  
+      when: flag_file.stat.exists == false
 
     - name: Mount the volume
       mount:
