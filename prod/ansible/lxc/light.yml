@@ -98,10 +98,10 @@
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
           - dockge_data:/app/data
-          - /opt/homelab/docker-compose:/opt/homelab/docker-compose
+          - /mnt/nfs/docker/compose:/mnt/nfs/docker/compose
         container_default_behavior: 'compatibility'
         env:
-          DOCKGE_STACKS_DIR: /opt/homelab/docker-compose
+          DOCKGE_STACKS_DIR: /mnt/nfs/docker/compose
 
     - name: Create NFS mount point
       ansible.builtin.file:
