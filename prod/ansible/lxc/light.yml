@@ -6,6 +6,7 @@
   gather_facts: yes
 
   vars:
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
     compose_stacks:
       - speedtest.yml
 
@@ -23,6 +24,13 @@
         name:
           - ca-certificates
           - curl
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+          - nfs-common
+          - nfs4-acl-tools
         state: present
 
     - name: Create /etc/apt/keyrings directory
@@ -51,17 +59,10 @@
       apt:
         update_cache: yes
 
-    - name: Install packages
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-          - nfs-common
-          - nfs4-acl-tools
-        state: present
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
 
     - name: Schedule playbook to run every 5 minutes
       cron:
@@ -116,10 +117,17 @@
         opts: rw,sync,hard
         state: mounted
         fstype: nfs
+      when: flag_file.stat.exists == false
 
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
         msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
+
+    - name: Create the flag file
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
     
     
     
