@@ -98,7 +98,7 @@
           - dockge_data:/app/data
           - /opt/homelab/docker-compose:/opt/homelab/docker-compose
         container_default_behavior: 'compatibility'
-        environment:
+        env:
           - DOCKGE_STACKS_DIR=/opt/homelab/docker-compose
     
     
