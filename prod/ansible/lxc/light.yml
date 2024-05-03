@@ -24,13 +24,6 @@
         name:
           - ca-certificates
           - curl
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-          - nfs-common
-          - nfs4-acl-tools
         state: present
 
     - name: Create /etc/apt/keyrings directory
@@ -58,6 +51,18 @@
     - name: Update apt cache again
       apt:
         update_cache: yes
+
+    - name: Install packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+          - nfs-common
+          - nfs4-acl-tools
+        state: present
 
     - name: Check if the flag file exists
       stat:
@@ -110,6 +115,11 @@
         state: directory
         mode: '0755'
     
+    - name: Check if mountpoint is empty
+      ansible.builtin.find:
+        paths: /mnt/nfs
+      register: mountpoint_contents
+    
     - name: Mount NFS share
       ansible.posix.mount:
         src: 192.168.1.30:/share/
@@ -117,7 +127,7 @@
         opts: rw,sync,hard
         state: mounted
         fstype: nfs
-      when: flag_file.stat.exists == false
+      when: mountpoint_contents.matched == 0
 
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
