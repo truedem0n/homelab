@@ -109,12 +109,12 @@
         env:
           DOCKGE_STACKS_DIR: /mnt/nfs/docker/compose
 
-    - name: Create NFS mount point
-      ansible.builtin.file:
-        path: /mnt/nfs
-        state: directory
-        mode: '0755'
-      when: flag_file.stat.exists == false
+    # - name: Create NFS mount point
+    #   ansible.builtin.file:
+    #     path: /mnt/nfs
+    #     state: directory
+    #     mode: '0755'
+    #   when: flag_file.stat.exists == false
     
     - name: Add NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
