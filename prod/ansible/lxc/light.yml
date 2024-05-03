@@ -79,13 +79,26 @@
         repo: https://github.com/truedem0n/homelab.git
         dest: /opt/homelab
 
-    - name: Deploy specified Docker Compose stacks
-      docker_compose:
-        project_src: /opt/homelab/docker-compose
-        files: "{{ item }}"
-        state: present
-      loop: "{{ compose_stacks }}"
-      when: "item in lookup('fileglob', '/opt/homelab/docker-compose/*.yml') + lookup('fileglob', '/opt/homelab/docker-compose/*.yaml')"
+    - name: Create Dockge docker volume
+      docker_volume:
+        name: dockge_data
+    
+    - name: Deploy Dockge Container
+      docker_container:
+        name: dockge
+        image: louislam/dockge:latest
+        state: started
+        restart_policy: always
+        detach: yes
+        ports:
+          - "5001:5001"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - dockge_data:/app/data
+          - /opt/homelab/docker-compose:/opt/homelab/docker-compose
+        container_default_behavior: 'compatibility'
+        environment:
+          - DOCKGE_STACKS_DIR=/opt/homelab/docker-compose
     
     
     
