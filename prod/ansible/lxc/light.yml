@@ -78,6 +78,7 @@
       git:
         repo: https://github.com/truedem0n/homelab.git
         dest: /opt/homelab
+        force: true
 
     - name: Create Dockge docker volume
       docker_volume:
