@@ -4,6 +4,11 @@
   connection: local
   become: yes
   gather_facts: no  # Disable gathering facts
+
+  vars:
+    compose_stacks:
+      - speedtest.yml
+
   tasks:
     - name: Update package cache
       apt:
@@ -69,5 +74,19 @@
         special_time: "reboot"
 
 
+    - name: Clone the homelab repository
+      git:
+        repo: https://github.com/truedem0n/homelab.git
+        dest: /opt/homelab
+        version: master
+
+    - name: Deploy specified Docker Compose stacks
+      docker_compose:
+        project_src: /opt/homelab/docker-compose
+        files: "{{ item }}"
+        state: present
+      loop: "{{ compose_stacks }}"
+      when: "item in lookup('fileglob', '/opt/homelab/docker-compose/*.yml') + lookup('fileglob', '/opt/homelab/docker-compose/*.yaml')"
+    
     
     
