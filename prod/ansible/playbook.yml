@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
   become: yes
-  gather_facts: no  # Disable gathering facts
+  gather_facts: yes  # Disable gathering facts
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbook.yml"
@@ -25,6 +25,8 @@
         name:
           - docker
           - docker-compose
+          - nfs-common
+          - nfs4-acl-tools
         state: present
 
     - name: Check if the flag file exists
@@ -35,14 +37,14 @@
     - name: Schedule playbook to run every 5 minutes with logging
       cron:
         name: "Run Ansible playbook every 5 minutes with logging"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} >> /var/log/ansible-pull.log 2>&1"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         minute: "*/5"
         state: present
 
     - name: Schedule playbook to run at reboot with logging
       cron:
         name: "Run Ansible playbook at reboot with logging"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} >> /var/log/ansible-pull.log 2>&1"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
 
@@ -70,7 +72,6 @@
       loop:
         - /ansible/
         - /mnt/data
-        - /opt/dockge
       when: flag_file.stat.exists == false
 
     - name: Set permissions on the mount point directory
@@ -80,14 +81,6 @@
         owner: skylord  
         group: skylord  
       when: flag_file.stat.exists == false
-
-    - name: Mount the volume
-      mount:
-        path: /mnt/data
-        src: /dev/sdb1
-        fstype: ext4
-        opts: defaults
-        state: mounted
 
     - name: Deploy Dockge Container
       docker_container:
@@ -104,6 +97,16 @@
           - /mnt/data/docker/compose:/mnt/data/docker/compose
         env:
           DOCKGE_STACKS_DIR: /mnt/data/docker/compose
+
+    - name: Add NFS mount to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "192.168.1.30:/share/ /mnt/data nfs rw,sync,hard 0 0"
+        state: present
+
+    - name: Print link to local IP with port 5001
+      ansible.builtin.debug:
+        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
 
     - name: Start Docker service
       systemd:
