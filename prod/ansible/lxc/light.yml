@@ -59,6 +59,8 @@
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
+          - nfs-common
+          - nfs4-acl-tools
         state: present
 
     - name: Schedule playbook to run every 5 minutes
@@ -100,6 +102,20 @@
         container_default_behavior: 'compatibility'
         env:
           DOCKGE_STACKS_DIR: /opt/homelab/docker-compose
+
+    - name: Create NFS mount point
+      ansible.builtin.file:
+        path: /mnt/nfs
+        state: directory
+        mode: '0755'
+    
+    - name: Mount NFS share
+      ansible.posix.mount:
+        src: 192.168.1.30:/homelab/
+        path: /mnt/nfs
+        opts: rw,sync,hard
+        state: mounted
+        fstype: nfs
 
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
