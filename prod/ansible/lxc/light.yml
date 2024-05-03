@@ -68,6 +68,12 @@
       stat:
         path: "{{ ansible_flag_path }}"
       register: flag_file
+    
+    - name: Create ansible dir
+      ansible.builtin.file:
+        path: /ansible/
+        state: directory
+        mode: '0755'
 
     - name: Schedule playbook to run every 5 minutes
       cron:
@@ -109,12 +115,6 @@
         env:
           DOCKGE_STACKS_DIR: /mnt/nfs/docker/compose
 
-    # - name: Create NFS mount point
-    #   ansible.builtin.file:
-    #     path: /mnt/nfs
-    #     state: directory
-    #     mode: '0755'
-    #   when: flag_file.stat.exists == false
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
         path: /etc/fstab
@@ -130,17 +130,14 @@
       ansible.builtin.debug:
         msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
 
-    
-    - name: Create ansible dir
-      ansible.builtin.file:
-        path: /ansible/
-        state: directory
-        mode: '0755'
-
     - name: Create the flag file
       file:
         path: "{{ ansible_flag_path }}"
         state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Reboot immediately if there was a change
+      reboot:
       when: flag_file.stat.exists == false
     
     
