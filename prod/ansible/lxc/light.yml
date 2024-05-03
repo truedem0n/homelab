@@ -99,7 +99,7 @@
           - /opt/homelab/docker-compose:/opt/homelab/docker-compose
         container_default_behavior: 'compatibility'
         env:
-          - DOCKGE_STACKS_DIR=/opt/homelab/docker-compose
+          DOCKGE_STACKS_DIR: /opt/homelab/docker-compose
     
     
     
