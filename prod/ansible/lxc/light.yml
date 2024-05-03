@@ -137,7 +137,7 @@
       when: flag_file.stat.exists == false
 
     - name: Reboot immediately if there was a change
-      ansible.builtin.command: /usr/bin/screen -dm /usr/bin/sleep 5 && /sbin/reboot
+      ansible.builtin.command: /usr/bin/sleep 5 && /sbin/reboot
       when: flag_file.stat.exists == false
     
     
