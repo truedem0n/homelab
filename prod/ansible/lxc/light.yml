@@ -111,7 +111,7 @@
     
     - name: Mount NFS share
       ansible.posix.mount:
-        src: 192.168.1.30:/homelab/
+        src: 192.168.1.30:/share/
         path: /mnt/nfs
         opts: rw,sync,hard
         state: mounted
