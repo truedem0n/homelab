@@ -114,6 +114,7 @@
         path: /mnt/nfs
         state: directory
         mode: '0755'
+      when: flag_file.stat.exists == false
     
     - name: Add NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
