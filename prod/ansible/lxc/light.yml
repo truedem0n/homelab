@@ -100,6 +100,10 @@
         container_default_behavior: 'compatibility'
         env:
           DOCKGE_STACKS_DIR: /opt/homelab/docker-compose
+
+    - name: Print link to local IP with port 5001
+      ansible.builtin.debug:
+        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
     
     
     
