@@ -78,7 +78,6 @@
       git:
         repo: https://github.com/truedem0n/homelab.git
         dest: /opt/homelab
-        version: master
 
     - name: Deploy specified Docker Compose stacks
       docker_compose:
