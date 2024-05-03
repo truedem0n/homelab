@@ -104,9 +104,6 @@
         line: "192.168.1.30:/share/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
-    - name: Print link to local IP with port 5001
-      ansible.builtin.debug:
-        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
 
     - name: Start Docker service
       systemd:
@@ -129,6 +126,10 @@
         path: "{{ ansible_flag_path }}"
         state: touch
       when: flag_file.stat.exists == false
+    
+    - name: Print link to local IP with port 5001
+      ansible.builtin.debug:
+        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
 
   handlers:
     - name: Restart Docker
