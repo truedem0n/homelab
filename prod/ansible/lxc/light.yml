@@ -115,19 +115,11 @@
         state: directory
         mode: '0755'
     
-    - name: Check if mountpoint is empty
-      ansible.builtin.find:
-        paths: /mnt/nfs
-      register: mountpoint_contents
-    
-    - name: Mount NFS share
-      ansible.posix.mount:
-        src: 192.168.1.30:/share/
-        path: /mnt/nfs
-        opts: rw,sync,hard
-        state: mounted
-        fstype: nfs
-      when: mountpoint_contents.matched == 0
+    - name: Add NFS mount to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "192.168.1.30:/share/ /mnt/nfs nfs rw,sync,hard 0 0"
+        state: present
 
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
