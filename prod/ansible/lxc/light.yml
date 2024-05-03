@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
   become: yes
-  gather_facts: no  # Disable gathering facts
+  gather_facts: yes
 
   vars:
     compose_stacks:
