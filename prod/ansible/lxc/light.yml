@@ -110,20 +110,26 @@
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
           - dockge_data:/app/data
-          - /mnt/nfs/docker/compose:/mnt/nfs/docker/compose
+          - /mnt/data/docker/compose:/mnt/data/docker/compose
         container_default_behavior: 'compatibility'
         env:
-          DOCKGE_STACKS_DIR: /mnt/nfs/docker/compose
+          DOCKGE_STACKS_DIR: /mnt/data/docker/compose
 
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
         path: /etc/fstab
         state: touch
+
+    - name: Create data dir
+      ansible.builtin.file:
+        path: /mnt/data
+        state: directory
+        mode: '0755'
     
     - name: Add NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
         path: /etc/fstab
-        line: "192.168.1.30:/share/ /mnt/nfs nfs rw,sync,hard 0 0"
+        line: "192.168.1.30:/share/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
     - name: Print link to local IP with port 5001
