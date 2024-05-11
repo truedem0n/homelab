@@ -19,6 +19,11 @@
       apt:
         upgrade: dist
 
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+
     - name: Create required directories
       file:
         path: "{{ item }}"
@@ -38,11 +43,6 @@
           - nfs-common
           - nfs4-acl-tools
         state: present
-
-    - name: Check if the flag file exists
-      stat:
-        path: "{{ ansible_flag_path }}"
-      register: flag_file
 
     - name: Schedule playbook to run every 5 minutes
       cron:
