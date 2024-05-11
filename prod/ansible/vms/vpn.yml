@@ -7,7 +7,7 @@
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
-    ansible_playbook_path: "prod/ansible/lxc/light.yml"
+    ansible_playbook_path: "prod/ansible/vms/vpn.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
@@ -30,47 +30,11 @@
         - /mnt/data
       when: flag_file.stat.exists == false
     
-    - name: Install packages (debian)
+    - name: Install packages (ubuntu)
       apt:
         name:
-          - ca-certificates
-          - curl
-        state: present
-
-    - name: Create /etc/apt/keyrings directory
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
-    - name: Download Docker GPG key
-      get_url:
-        url: https://download.docker.com/linux/debian/gpg
-        dest: /etc/apt/keyrings/docker.asc
-        mode: '0644'
-
-    - name: Get distribution codename
-      command: lsb_release -cs
-      register: dist_codename
-
-    - name: Add Docker repository to Apt sources
-      lineinfile:
-        path: /etc/apt/sources.list.d/docker.list
-        line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ dist_codename.stdout }} stable"
-        create: yes
-
-    - name: Update apt cache again
-      apt:
-        update_cache: yes
-
-    - name: Install packages
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
+          - docker
+          - docker-compose
           - nfs-common
           - nfs4-acl-tools
         state: present
