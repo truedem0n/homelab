@@ -16,7 +16,7 @@
 # adguard
 /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/adguard.yml
 
-/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/light.yml
+/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/light.yml > /var/log/ansible-pull.log 2>&1
 
 
 # backups

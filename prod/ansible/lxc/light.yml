@@ -105,6 +105,12 @@
         special_time: "reboot"
         state: present
 
+    - name: Docker prune all
+      cron:
+        name: "Run Ansible playbook at reboot with logging"
+        job: "/usr/bin/docker system prune -a > /var/log/docker-prune.log 2>&1"
+        special_time: "daily"
+        state: present
 
     - name: Deploy Dockge Container
       docker_container:
