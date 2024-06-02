@@ -154,6 +154,13 @@
       ansible.builtin.debug:
         msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
     
+    - name: Ensure Docker is active
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+      when: flag_file.stat.exists == true
+    
     # instead do it via crontab daily
     # - name: Prune unused Docker data
     #   docker_prune:
