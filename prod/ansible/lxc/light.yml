@@ -19,11 +19,10 @@
       apt:
         upgrade: dist
 
-    - name: Create the flag file
-      file:
+    - name: Check if the flag file exists
+      stat:
         path: "{{ ansible_flag_path }}"
-        state: touch
-      when: flag_file.stat.exists == false
+      register: flag_file
 
     - name: Create required directories
       file:
@@ -34,6 +33,12 @@
       loop:
         - /ansible/
         - /mnt/data
+      when: flag_file.stat.exists == false
+    
+    - name: Create the flag file
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
       when: flag_file.stat.exists == false
     
     - name: Install packages (debian)
