@@ -115,7 +115,7 @@
     - name: Deploy Dockge Container
       docker_container:
         name: dockge
-        image: louislam/dockge:latest
+        image: louislam/dockge:beta
         state: started
         restart_policy: always
         detach: yes
