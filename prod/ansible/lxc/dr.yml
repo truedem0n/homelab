@@ -12,8 +12,8 @@
     ansible_flag_path: "/ansible/ansible_first_run.flag"
     restic_lib_path: "/var/lib/restic"
     files:
-      - path: /etc/restic-env
-      - path: /etc/restic-password
+      - path: "{{ restic_lib_path }}/restic-env"
+      - path: "{{ restic_lib_path }}/restic-password"
 
   tasks:
     - name: Check if the flag file exists
