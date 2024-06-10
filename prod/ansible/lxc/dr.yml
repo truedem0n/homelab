@@ -1,0 +1,56 @@
+# backup 
+---
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/lxc/dr.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
+
+  tasks:
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+
+    - name: Create a file with content
+      copy:
+        content: |
+          export AWS_ACCESS_KEY_ID=<B2_KEY_ID>
+          export AWS_SECRET_ACCESS_KEY=<B2_ApplicationKey>
+          export RESTIC_REPOSITORY="s3:s3.us-west-002.backblazeb2.com/s3restic2023"
+          export RESTIC_PASSWORD_FILE=/etc/restic-password
+        dest: /etc/restic-env
+        mode: 0644
+        when: flag_file.stat.exists == false 
+
+    - name: Create the flag file
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
+  
+    - name: Create the flag file
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run b2 backup playbook every 5 minutes with logging"
+        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-b2-backup.log 2>&1"
+        special_time: "hourly"
+        state: present
+
+    - name: Schedule playbook to run at reboot with logging
+      cron:
+        name: "Run b2 backup playbook at reboot with logging"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-b2-backup.log 2>&1"
+        special_time: "reboot"
+        state: present
+
