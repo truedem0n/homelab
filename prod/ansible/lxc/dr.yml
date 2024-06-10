@@ -24,16 +24,16 @@
           export AWS_ACCESS_KEY_ID=<B2_KEY_ID>
           export AWS_SECRET_ACCESS_KEY=<B2_ApplicationKey>
           export RESTIC_REPOSITORY="s3:s3.us-west-002.backblazeb2.com/s3restic2023"
-          export RESTIC_PASSWORD_FILE=/etc/restic-password
+          export RESTIC_PASSWORD_FILE={{ restic_lib_path }}restic-password
         dest: "{{ restic_lib_path }}/restic-env"
         mode: 0644
       # when: flag_file.stat.exists == false 
 
     - name: Create the flag file
       file:
-        path: "{{ ansible_flag_path }}"
+        path: "{{ restic_lib_path }}/restic-password"
         state: touch
-      when: flag_file.stat.exists == false
+      # when: flag_file.stat.exists == false
   
     - name: Create the flag file
       file:
