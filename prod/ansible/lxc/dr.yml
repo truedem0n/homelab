@@ -10,6 +10,7 @@
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/lxc/dr.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
+    restic_lib_path: "/var/lib/restic"
 
   tasks:
     - name: Check if the flag file exists
@@ -24,9 +25,9 @@
           export AWS_SECRET_ACCESS_KEY=<B2_ApplicationKey>
           export RESTIC_REPOSITORY="s3:s3.us-west-002.backblazeb2.com/s3restic2023"
           export RESTIC_PASSWORD_FILE=/etc/restic-password
-        dest: /etc/restic-env
+        dest: "{{ restic_lib_path }}/restic-env"
         mode: 0644
-      when: flag_file.stat.exists == false 
+      # when: flag_file.stat.exists == false 
 
     - name: Create the flag file
       file:
