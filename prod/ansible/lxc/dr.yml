@@ -65,4 +65,14 @@
         owner: root
         group: root
         mode: 0700
+    
+    - name: Load environment variables from restic-env
+      ansible.builtin.env:
+        file: "{{ restic_lib_path }}/restic-env"
+        state: present
+
+    - name: Run a command with the loaded environment variables
+      ansible.builtin.command: restic --version
+      environment: "{{ env_output.env }}"
+      register: restic_version
 
