@@ -26,7 +26,7 @@
           export RESTIC_PASSWORD_FILE=/etc/restic-password
         dest: /etc/restic-env
         mode: 0644
-        when: flag_file.stat.exists == false 
+      when: flag_file.stat.exists == false 
 
     - name: Create the flag file
       file:
