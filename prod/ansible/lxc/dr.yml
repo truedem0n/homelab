@@ -11,6 +11,9 @@
     ansible_playbook_path: "prod/ansible/lxc/dr.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
     restic_lib_path: "/var/lib/restic"
+    files:
+      - path: /etc/restic-env
+      - path: /etc/restic-password
 
   tasks:
     - name: Check if the flag file exists
@@ -27,13 +30,13 @@
           export RESTIC_PASSWORD_FILE={{ restic_lib_path }}/restic-password
         dest: "{{ restic_lib_path }}/restic-env"
         mode: 0644
-      # when: flag_file.stat.exists == false
+      when: flag_file.stat.exists == false
 
     - name: Create the flag file
       file:
         path: "{{ restic_lib_path }}/restic-password"
         state: touch
-      # when: flag_file.stat.exists == false
+      when: flag_file.stat.exists == false
   
     - name: Create the flag file
       file:
@@ -54,4 +57,12 @@
         job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-b2-backup.log 2>&1"
         special_time: "reboot"
         state: present
+
+    - name: Change ownership and permissions of files
+      loop: "{{ files }}"
+      file:
+        path: "{{ item.path }}"
+        owner: root
+        group: root
+        mode: 0700
 
