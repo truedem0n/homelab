@@ -108,7 +108,7 @@
     - name: Schedule docker system prune all
       cron:
         name: "Run docker system prune with logging"
-        job: "/usr/bin/docker system prune -a > /var/log/docker-prune.log 2>&1"
+        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
         special_time: "daily"
         state: present
 

@@ -23,3 +23,11 @@
 @daily /usr/bin/restic -r /mnt/backups/restic-backup backup /mnt/pve/local-nfs/docker/ --password-file ~/restic_p
 
 /usr/bin/restic -r /mnt/backups/restic-backup snapshots --password-file ~/restic_p
+
+
+# watchtower
+docker run -v /var/run/docker.sock:/var/run/docker.sock containrrr/watchtower --run-once
+
+# Useful proxmox cmd
+echo 1 > /proc/sys/kernel/sysrq
+echo b > /proc/sysrq-trigger

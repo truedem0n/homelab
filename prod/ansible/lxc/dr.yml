@@ -16,6 +16,12 @@
       - path: "{{ restic_lib_path }}/restic-password"
 
   tasks:
+    - name: Install packages
+      apt:
+        name:
+          - restic
+        state: present
+
     - name: Check if the flag file exists
       stat:
         path: "{{ ansible_flag_path }}"
