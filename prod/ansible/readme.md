@@ -18,6 +18,9 @@
 
 /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/light.yml > /var/log/ansible-pull.log 2>&1
 
+## Ubuntu
+/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/ubuntu.yml > /var/log/ansible-pull.log 2>&1
+
 
 # backups
 @daily /usr/bin/restic -r /mnt/backups/restic-backup backup /mnt/pve/local-nfs/docker/ --password-file ~/restic_p
