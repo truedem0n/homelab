@@ -50,7 +50,7 @@
     - name: Configure NFS exports
       lineinfile:
         path: /etc/exports
-        line: '/var/nfs/shared *(rw,sync,no_subtree_check)'
+        line: '/var/nfs/shared *(subtree_check,insecure,anonuid=1000,anongid=1000,no_root_squash,rw)'
         create: yes
 
 
