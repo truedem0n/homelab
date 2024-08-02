@@ -5,7 +5,7 @@
   when: flag_file_exists == false
 - import_playbook: nfs.yml 
   when: flag_file_exists == false
-- import_playbook: main_playbook.yml
+- import_playbook: ../cron/main_playbook.yml
 
 - name: main playbook
   hosts: localhost
