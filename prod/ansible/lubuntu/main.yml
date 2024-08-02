@@ -3,8 +3,8 @@
   import_playbook: ../apt/u_u.yml # update and upgrade
 
 ---
-- name: Do updates
-  import_playbook: nfs.yml # update and upgrade
+- name: setup nfs
+  import_playbook: nfs.yml 
 
 - name: main playbook
   hosts: localhost
@@ -20,7 +20,7 @@
       ansible.builtin.stat:
         path: "{{ ansible_flag_path }}"
       register: flag_file
-      
+
     - name: Create required directories
       file:
         path: "{{ item }}"
