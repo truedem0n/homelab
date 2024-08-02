@@ -1,6 +1,6 @@
 ---
 - name: Do updates
-  import_playbook: ../apt/update-and-upgrade.yml
+  import_playbook: ../apt/u_u.yml # update and upgrade
 
 - name: main playbook
   hosts: localhost
@@ -8,10 +8,8 @@
   become: yes
   gather_facts: yes
 
-  vars:
-    git_repo_url: "https://github.com/truedem0n/homelab.git"
-    ansible_playbook_path: "prod/ansible/lubuntu/main.yml"
-    ansible_flag_path: "/ansible/ansible_first_run.flag"
+  vars_files:
+    - vars.yml
 
   tasks:
     - name: Install packages
