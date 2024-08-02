@@ -1,0 +1,17 @@
+---
+- name: Setup cron
+  hosts: localhost
+  tasks:
+  - name: Schedule playbook to run every 5 minutes
+    ansible.builtin.cron:
+      name: "Run Ansible playbook every 5 minutes with logging"
+      job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+      minute: "*/5"
+      state: present
+
+  - name: Schedule playbook to run at reboot with logging
+    ansible.builtin.cron:
+      name: "Run Ansible playbook at reboot with logging"
+      job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+      special_time: "reboot"
+      state: present

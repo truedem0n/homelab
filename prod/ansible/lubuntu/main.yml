@@ -13,10 +13,6 @@
   gather_facts: yes
 
   tasks:
-    - name: Check if the flag file exists
-      ansible.builtin.stat:
-        path: "{{ ansible_flag_path }}"
-      register: flag_file
 
     - name: Create required directories
       file:
@@ -26,25 +22,10 @@
         recurse: yes
       loop:
         - /ansible/
-      when: flag_file.stat.exists == false
+      when: flag_file_exists == false
 
-    - name: Schedule playbook to run every 5 minutes
-      ansible.builtin.cron:
-        name: "Run Ansible playbook every 5 minutes with logging"
-        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
-        minute: "*/5"
-        state: present
-
-    - name: Schedule playbook to run at reboot with logging
-      ansible.builtin.cron:
-        name: "Run Ansible playbook at reboot with logging"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
-        special_time: "reboot"
-        state: present
-
-    
     - name: Create the flag file
       ansible.builtin.file:
         path: "{{ ansible_flag_path }}"
         state: touch
-      when: flag_file.stat.exists == false
+      when: flag_file_exists == false
