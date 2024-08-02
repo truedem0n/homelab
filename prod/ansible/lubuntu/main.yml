@@ -1,5 +1,6 @@
 ---
 - import_playbook: ../apt/u_u.yml # update and upgrade
+- import_playbook: set_facts.yml
 - import_playbook: ../docker/install.yml 
 - import_playbook: nfs.yml 
 

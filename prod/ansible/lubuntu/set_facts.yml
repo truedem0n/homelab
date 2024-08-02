@@ -1,0 +1,16 @@
+---
+- name: Set global facts
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Check if the flag file exists
+      ansible.builtin.stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+
+    - name: Set fact for all hosts
+      set_fact:
+        flag_file_exists: flag_file.stat.exists
+      delegate_facts: true
