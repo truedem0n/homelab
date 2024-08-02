@@ -7,7 +7,7 @@
   tasks:
     - name: Check if the flag file exists
       ansible.builtin.stat:
-        path: "{{ ansible_flag_path }}"
+        path: "/ansible/ansible_first_run.flag"
       register: flag_file
 
     - name: Set fact for all hosts
