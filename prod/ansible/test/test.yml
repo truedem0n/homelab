@@ -9,3 +9,12 @@
     - name: Debug PATH
       debug:
         msg: "{{ ansible_env.PATH }}"
+    
+    - name: Check if apt-get is installed
+      command: which apt-get
+      register: apt_get_check
+      ignore_errors: yes
+
+    - name: Debug apt-get check
+      debug:
+        msg: "apt-get is {{ 'installed' if apt_get_check.rc == 0 else 'not installed' }}"
