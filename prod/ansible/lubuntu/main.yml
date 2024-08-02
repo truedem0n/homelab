@@ -1,11 +1,7 @@
 ---
-- name: Do updates
-  import_playbook: ../apt/u_u.yml # update and upgrade
-
-
-
-- name: setup docker
-  import_playbook: ../docker/install.yml 
+- import_playbook: ../apt/u_u.yml # update and upgrade
+- import_playbook: ../docker/install.yml 
+- import_playbook: nfs.yml 
 
 - name: main playbook
   hosts: localhost
@@ -21,9 +17,6 @@
       ansible.builtin.stat:
         path: "{{ ansible_flag_path }}"
       register: flag_file
-    
-    - name: setup nfs
-      import_playbook: nfs.yml 
 
     - name: Create required directories
       file:
