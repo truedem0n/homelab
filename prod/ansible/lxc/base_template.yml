@@ -3,7 +3,12 @@
   hosts: localhost
   connection: local
   become: yes
-  # gather_facts: yes
+  gather_facts: yes
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/lxc/light.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
     - name: Update package cache
