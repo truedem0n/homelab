@@ -2,8 +2,9 @@
 - name: Update and upgrade Ubuntu packages locally
   hosts: localhost
   connection: local
-  # become: yes
-  # gather_facts: yes
+  become: yes
+  become_method: sudo
+  become_user: root
 
   tasks:
     - name: Update package cache
