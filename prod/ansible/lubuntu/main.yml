@@ -1,6 +1,6 @@
 ---
 - name: Do updates
-  import_playbook: update-and-upgrade.yml
+  import_playbook: ../apt/update-and-upgrade.yml
 
 - name: main playbook
   hosts: localhost
