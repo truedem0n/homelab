@@ -1,7 +1,6 @@
 ---
-- name: Update and upgrade Ubuntu packages locally
+- name: setup nfs
   hosts: localhost
-  when: flag_file.stat.exists == false
   tasks:
     - name: Install packages
       ansible.builtin.apt:
