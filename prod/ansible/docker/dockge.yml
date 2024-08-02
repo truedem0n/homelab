@@ -14,7 +14,7 @@
           - "5001:5001"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
-          - /mnt/data/docker/containers/dockge/app/data:/app/data
+          - /home/skylord/docker_compose/dockge/vol_mnt/app/data:/app/data
           - /home/skylord/docker_compose/:/docker_compose
         container_default_behavior: 'compatibility'
         env:
