@@ -1,5 +1,7 @@
-# ubuntu
 ---
+- name: Do updates
+  import_playbook: update-and-upgrade.yml
+
 - name: main playbook
   hosts: localhost
   connection: local
@@ -12,61 +14,51 @@
     ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
-    - name: Do updates
-      ansible.builtin.import_playbook: update-and-upgrade.yml
-
     - name: Install packages
-      apt:
+      ansible.builtin.apt:
         name:
           - nfs-kernel-server
         state: present
         update_cache: yes
     
     - name: Schedule playbook to run every 5 minutes
-      cron:
+      ansible.builtin.cron:
         name: "Run Ansible playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         minute: "*/5"
         state: present
 
     - name: Schedule playbook to run at reboot with logging
-      cron:
+      ansible.builtin.cron:
         name: "Run Ansible playbook at reboot with logging"
         job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
 
-
     - name: Check if the flag file exists
-      stat:
+      ansible.builtin.stat:
         path: "{{ ansible_flag_path }}"
       register: flag_file
 
-
     - name: Create NFS export directory
-      file:
+      ansible.builtin.file:
         path: /var/nfs/shared
         state: directory
         mode: '0755'
     
-
     - name: Configure NFS exports
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/exports
         line: '/var/nfs/shared *(subtree_check,insecure,anonuid=1000,anongid=1000,no_root_squash,rw)'
         create: yes
 
-
     - name: Restart NFS server
-      systemd:
+      ansible.builtin.systemd:
         name: nfs-kernel-server
         state: restarted
     
-
     - name: Create the flag file
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_flag_path }}"
         state: touch
       when: flag_file.stat.exists == false
-
-
