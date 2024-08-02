@@ -5,15 +5,14 @@
   when: flag_file_exists == false
 - import_playbook: nfs.yml 
   when: flag_file_exists == false
+- import_playbook: main_playbook.yml
 
 - name: main playbook
   hosts: localhost
   connection: local
   become: yes
   gather_facts: yes
-
   tasks:
-
     - name: Create required directories
       file:
         path: "{{ item }}"
