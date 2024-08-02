@@ -5,6 +5,9 @@
 - name: setup nfs
   import_playbook: nfs.yml 
 
+- name: setup docker
+  import_playbook: ../docker/install.yml 
+
 - name: main playbook
   hosts: localhost
   connection: local

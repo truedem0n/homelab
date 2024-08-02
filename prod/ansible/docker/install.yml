@@ -1,0 +1,61 @@
+---
+- name: Setup docker
+  hosts: localhost
+
+  tasks:
+    - name: Install packages (debian)
+      apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: Create /etc/apt/keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker GPG key
+      get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Get distribution codename
+      command: lsb_release -cs
+      register: dist_codename
+
+    - name: Add Docker repository to Apt sources
+      lineinfile:
+        path: /etc/apt/sources.list.d/docker.list
+        line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ dist_codename.stdout }} stable"
+        create: yes
+
+    - name: Update apt cache again
+      apt:
+        update_cache: yes
+
+    - name: Install packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Schedule docker system prune all
+      cron:
+        name: "Run docker system prune with logging"
+        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
+        special_time: "daily"
+        state: present
+
+    - name: Ensure Docker is active
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+    
