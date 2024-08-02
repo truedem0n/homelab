@@ -1,0 +1,11 @@
+---
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+  connection: local
+  # become: yes
+  # gather_facts: yes
+
+  tasks:
+    - name: Debug PATH
+      debug:
+        msg: "{{ ansible_env.PATH }}"
