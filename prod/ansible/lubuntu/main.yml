@@ -3,9 +3,11 @@
 - import_playbook: set_facts.yml
 - import_playbook: ../docker/install.yml 
   when: flag_file_exists == false
+- import_playbook: ../docker/dockge.yml
 - import_playbook: nfs.yml 
   when: flag_file_exists == false
 - import_playbook: ../cron/main_playbook.yml
+
 
 - name: main playbook
   hosts: localhost

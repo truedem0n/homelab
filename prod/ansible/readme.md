@@ -9,8 +9,6 @@
 /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/vms/vpn.yml
 
 
-
-
 ## LXC containers
 
 # adguard
