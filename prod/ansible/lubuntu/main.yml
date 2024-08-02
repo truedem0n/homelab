@@ -2,7 +2,9 @@
 - import_playbook: ../apt/u_u.yml # update and upgrade
 - import_playbook: set_facts.yml
 - import_playbook: ../docker/install.yml 
+  when: flag_file_exists == false
 - import_playbook: nfs.yml 
+  when: flag_file_exists == false
 
 - name: main playbook
   hosts: localhost

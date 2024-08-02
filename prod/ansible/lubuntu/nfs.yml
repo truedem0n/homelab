@@ -1,7 +1,6 @@
 ---
 - name: setup nfs
   hosts: localhost
-  when: flag_file_exists == false
   tasks:
     - name: Install packages
       ansible.builtin.apt:
