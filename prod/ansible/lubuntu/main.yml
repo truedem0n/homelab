@@ -2,6 +2,10 @@
 - name: Do updates
   import_playbook: ../apt/u_u.yml # update and upgrade
 
+---
+- name: Do updates
+  import_playbook: nfs.yml # update and upgrade
+
 - name: main playbook
   hosts: localhost
   connection: local
@@ -12,13 +16,21 @@
     - vars.yml
 
   tasks:
-    - name: Install packages
-      ansible.builtin.apt:
-        name:
-          - nfs-kernel-server
-        state: present
-        update_cache: yes
-    
+    - name: Check if the flag file exists
+      ansible.builtin.stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+      
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        recurse: yes
+      loop:
+        - /ansible/
+      when: flag_file.stat.exists == false
+
     - name: Schedule playbook to run every 5 minutes
       ansible.builtin.cron:
         name: "Run Ansible playbook every 5 minutes with logging"
@@ -33,27 +45,6 @@
         special_time: "reboot"
         state: present
 
-    - name: Check if the flag file exists
-      ansible.builtin.stat:
-        path: "{{ ansible_flag_path }}"
-      register: flag_file
-
-    - name: Create NFS export directory
-      ansible.builtin.file:
-        path: /var/nfs/shared
-        state: directory
-        mode: '0755'
-    
-    - name: Configure NFS exports
-      ansible.builtin.lineinfile:
-        path: /etc/exports
-        line: '/var/nfs/shared *(subtree_check,insecure,anonuid=1000,anongid=1000,no_root_squash,rw)'
-        create: yes
-
-    - name: Restart NFS server
-      ansible.builtin.systemd:
-        name: nfs-kernel-server
-        state: restarted
     
     - name: Create the flag file
       ansible.builtin.file:

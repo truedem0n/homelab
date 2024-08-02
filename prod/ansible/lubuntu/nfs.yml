@@ -1,0 +1,29 @@
+---
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - nfs-kernel-server
+        state: present
+        update_cache: yes
+
+    - name: Create NFS export directory
+      ansible.builtin.file:
+        path: /var/nfs/shared
+        state: directory
+        mode: '0755'
+    
+    - name: Configure NFS exports
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: '/var/nfs/shared *(subtree_check,insecure,anonuid=1000,anongid=1000,no_root_squash,rw)'
+        create: yes
+
+    - name: Restart NFS server
+      ansible.builtin.systemd:
+        name: nfs-kernel-server
+        state: restarted
+    
