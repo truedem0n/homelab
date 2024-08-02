@@ -1,9 +1,4 @@
 ---
-- name: Check if the flag file exists
-  ansible.builtin.stat:
-    path: "/ansible/ansible_first_run.flag"
-  register: flag_file
-
 - name: Update and upgrade Ubuntu packages locally
   hosts: localhost
   when: flag_file.stat.exists == false
