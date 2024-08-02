@@ -18,8 +18,8 @@
 
 /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lxc/light.yml > /var/log/ansible-pull.log 2>&1
 
-## Ubuntu
-/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/ubuntu.yml > /var/log/ansible-pull.log 2>&1
+## Lubuntu
+/usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/lubuntu/main.yml > /var/log/ansible-pull.log 2>&1
 
 
 # backups

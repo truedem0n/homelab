@@ -1,6 +1,6 @@
 # ubuntu
 ---
-- name: Update and upgrade Ubuntu packages locally
+- name: main playbook
   hosts: localhost
   connection: local
   become: yes
@@ -8,10 +8,13 @@
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
-    ansible_playbook_path: "prod/ansible/ubuntu.yml"
+    ansible_playbook_path: "prod/ansible/lubuntu/main.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
+    - name: Do updates
+      ansible.builtin.import_playbook: update-and-upgrade.yml
+
     - name: Install packages
       apt:
         name:
