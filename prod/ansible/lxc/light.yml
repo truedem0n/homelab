@@ -112,23 +112,6 @@
         special_time: "daily"
         state: present
 
-    - name: Deploy Dockge Container
-      docker_container:
-        name: dockge
-        image: louislam/dockge:latest
-        state: started
-        restart_policy: always
-        detach: yes
-        ports:
-          - "5001:5001"
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-          - /mnt/data/docker/containers/dockge/app/data:/app/data
-          - /mnt/data/docker/compose:/mnt/data/docker/compose
-        container_default_behavior: 'compatibility'
-        env:
-          DOCKGE_STACKS_DIR: /mnt/data/docker/compose
-
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
         path: /etc/fstab
