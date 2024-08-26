@@ -50,7 +50,7 @@
         state: touch
       when: flag_file.stat.exists == false
 
-    - name: Schedule playbook to run every 5 minutes
+    - name: Schedule playbook to run every hour
       cron:
         name: "Run b2 backup playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-b2-backup.log 2>&1"
