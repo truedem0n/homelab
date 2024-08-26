@@ -77,8 +77,8 @@
       args:
         executable: /bin/bash
 
-    - name: Run restic command
-      shell: restic -r s3:s3.us-east-005.backblazeb2.com/locallab backup /mnt/data/docker/services/
+    - name: Run restic services B2 Backup 
+      shell: restic -r s3.us-east-005.backblazeb2.com/locallab backup /mnt/data/docker/services/
       args:
         executable: /bin/bash
       
