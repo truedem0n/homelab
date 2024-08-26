@@ -73,7 +73,7 @@
         mode: 0700
 
     - name: Source the restic-env file
-      command: source {{ restic_lib_path }}/restic-env
+      command: "source {{ restic_lib_path }}/restic-env"
 
     - name: Run restic command
       command: restic --version
