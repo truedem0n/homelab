@@ -78,6 +78,6 @@
         executable: /bin/bash
 
     - name: Run restic command
-      command: restic --version
+      command: restic version
       register: restic_version
 
