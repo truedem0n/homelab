@@ -74,6 +74,8 @@
 
     - name: Source the restic-env file
       shell: "source {{ restic_lib_path }}/restic-env"
+      args:
+        executable: /bin/bash
 
     - name: Run restic command
       command: restic --version
