@@ -73,7 +73,7 @@
         mode: 0700
 
     - name: Source the restic-env file
-      shell: "source {{ restic_lib_path }}/restic-env"
+      shell: ""
       args:
         executable: /bin/bash
 
@@ -83,7 +83,9 @@
     #     executable: /bin/bash
 
     - name: Run restic services B2 Backup 
-      shell: restic -r b2:locallab backup /mnt/data/docker/services/
+      shell: |
+      source {{ restic_lib_path }}/restic-env
+      restic -r b2:locallab backup /mnt/data/docker/services/
       args:
         executable: /bin/bash
       
