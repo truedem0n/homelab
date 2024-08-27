@@ -72,10 +72,10 @@
         group: root
         mode: 0700
 
-    - name: Source the restic-env file
-      shell: ""
-      args:
-        executable: /bin/bash
+    # - name: Source the restic-env file
+    #   shell: ""
+    #   args:
+    #     executable: /bin/bash
 
     # - name: Create restic b2 services backup 
     #   shell: restic -r b2:locallab:/ init
