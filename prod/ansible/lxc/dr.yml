@@ -87,5 +87,10 @@
       args:
         executable: /bin/bash
       environment: "{{ restic_env }}"
+      register: restic_output
+
+    - name: Print restic backup output
+      debug:
+        var: restic_output
       
 
