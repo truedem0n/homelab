@@ -83,7 +83,7 @@
     #     executable: /bin/bash
 
     - name: Run restic services B2 backup 
-      shell: restic -r b2:locallab backup /mnt/data/docker/services/
+      shell: /usr/bin/restic -r b2:locallab backup /mnt/data/docker/services/
       args:
         executable: /bin/bash
       environment: "{{ restic_env }}"
@@ -94,13 +94,13 @@
         var: restic_b2_output
     
     - name: Run restic services local backup 
-      shell: restic -r b2:locallab backup /mnt/data/docker/services/
+      shell: /usr/bin/restic -r ~/nfs_test/backups/restic-backup/ backup /mnt/data/docker/ --password-file ~/restic_p
       args:
         executable: /bin/bash
-      register: restic_b2_output
+      register: restic_local_output
 
     - name: Print restic backup output
       debug:
-        var: restic_b2_output
+        var: restic_local_output
       
 
