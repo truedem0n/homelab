@@ -53,14 +53,14 @@
     - name: Schedule playbook to run every hour
       cron:
         name: "Run b2 backup playbook every 5 minutes with logging"
-        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-b2-backup.log 2>&1"
+        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
         special_time: "hourly"
         state: present
 
     - name: Schedule playbook to run at reboot with logging
       cron:
         name: "Run b2 backup playbook at reboot with logging"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-b2-backup.log 2>&1"
+        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
         special_time: "reboot"
         state: present
 
