@@ -92,6 +92,12 @@
     - name: Print restic backup output
       debug:
         var: restic_b2_output
+
+    - name: Add NFS mount to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "192.168.1.24:/var/nfs/shared ~/nuc_nfs nfs rw,sync,hard 0 0"
+        state: present
     
     - name: Run restic services local backup 
       shell: /usr/bin/restic -r ~/nuc_nfs/backups/restic-backup/ backup /mnt/data/docker/ --password-file ~/restic_p
