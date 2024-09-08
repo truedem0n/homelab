@@ -94,7 +94,7 @@
     - name: Add NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
         path: /etc/fstab
-        line: "192.168.1.24:/var/nfs/shared ~/nuc_nfs nfs rw,sync,hard 0 0"
+        line: "192.168.1.24:/var/nfs/shared /root/nuc_nfs nfs rw,sync,hard 0 0"
         state: present
     
     - name: Run restic services local backup 
