@@ -54,7 +54,7 @@
       cron:
         name: "Run b2 backup playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
-        special_time: "hourly"
+        special_time: "daily"
         state: present
 
     - name: Schedule playbook to run at reboot with logging
