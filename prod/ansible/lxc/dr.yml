@@ -11,6 +11,7 @@
     ansible_playbook_path: "prod/ansible/lxc/dr.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
     restic_lib_path: "/var/lib/restic"
+    ntfy_topic_file: "~/ntfy_topic"
     files:
       - path: "{{ restic_lib_path }}/restic-env"
       - path: "{{ restic_lib_path }}/restic-password"
@@ -20,6 +21,7 @@
       apt:
         name:
           - restic
+          - curl
         state: present
 
     - name: Check if the flag file exists
@@ -77,17 +79,13 @@
         file: "{{ restic_lib_path }}/restic-env"
         name: restic_env
 
-    # - name: Create restic b2 services backup 
-    #   shell: restic -r b2:locallab:/ init
-    #   args:
-    #     executable: /bin/bash
-
     - name: Run restic services B2 backup 
       shell: /usr/bin/restic -r b2:locallab backup /mnt/data/docker/services/
       args:
         executable: /bin/bash
       environment: "{{ restic_env }}"
       register: restic_b2_output
+      ignore_errors: yes
 
     - name: Print restic backup output
       debug:
@@ -104,9 +102,21 @@
       args:
         executable: /bin/bash
       register: restic_local_output
+      ignore_errors: yes
 
     - name: Print restic backup output
       debug:
         var: restic_local_output
-      
 
+    - name: Read ntfy topic from file
+      command: cat {{ ntfy_topic_file }}
+      register: ntfy_topic
+      changed_when: false
+
+    - name: Send notification on failure
+      shell: >
+        curl -d "Backup failed: {{ item.msg }}" ntfy.sh/{{ ntfy_topic.stdout }}
+      when: item.failed
+      loop:
+        - "{{ restic_b2_output }}"
+        - "{{ restic_local_output }}"
