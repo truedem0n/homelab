@@ -85,7 +85,7 @@
     - name: Add NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
         path: /etc/fstab
-        line: "192.168.1.26:/share/ /mnt/data nfs rw,sync,hard 0 0"
+        line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
     - name: Print link to local IP with port 5001
