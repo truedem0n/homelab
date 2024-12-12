@@ -1,3 +1,4 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/vms/ubuntu.yml
 ---
 - name: Update and upgrade Ubuntu packages locally
   hosts: localhost
