@@ -1,6 +1,6 @@
 # backup 
 ---
-- name: Update and upgrade Ubuntu packages locally
+- name: DR
   hosts: localhost
   connection: local
   become: yes

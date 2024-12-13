@@ -1,0 +1,118 @@
+# on host
+# vim /etc/pve/lxc/lxc_id.conf
+# add 
+# features: mount=nfs
+# on lxc
+# dnf install git ansible
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/distros/fedora/base.yml
+---
+- name: Update and upgrade Fedora packages locally
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/distros/fedora/base.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
+    ansible_python_interpreter: /usr/bin/python3
+    
+  pre_tasks:
+    - name: Install python3-libdnf5
+      raw: dnf install -y python3-libdnf5
+      args:
+        warn: false
+
+  tasks:
+    - name: Update package cache and upgrade all packages
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes
+
+    - name: Create user skylord with home directory
+      user:
+        name: skylord
+        create_home: yes
+        shell: /bin/bash
+        state: present
+
+    - name: Add skylord to sudoers
+      lineinfile:
+        path: /etc/sudoers.d/skylord
+        line: "skylord ALL=(ALL) NOPASSWD: ALL"
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        recurse: yes
+      loop:
+        - /ansible/
+        - /mnt/data
+      when: flag_file.stat.exists == false
+    
+    - name: Create the flag file
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Install required packages
+      dnf:
+        name:
+          - nfs-utils
+          - ca-certificates
+          - curl
+          - cronie
+          - cronie-anacron
+          - dnf-plugins-core
+          - ncurses
+          - vim
+          - openssh-server
+        state: present
+
+    - name: Enable and start crond service
+      systemd:
+        name: crond
+        state: started
+        enabled: yes
+
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run Ansible playbook every 5 minutes with logging"
+        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        minute: "*/5"
+        state: present
+
+    - name: Schedule playbook to run at reboot with logging
+      cron:
+        name: "Run Ansible playbook at reboot with logging"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        special_time: "reboot"
+        state: present
+
+    - name: Ensure /etc/fstab exists
+      ansible.builtin.file:
+        path: /etc/fstab
+        state: touch
+
+    - name: Add NFS mount to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
+        state: present
+
+    - name: Print link to local IP with port 5001
+      ansible.builtin.debug:
+        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
