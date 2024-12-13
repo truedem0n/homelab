@@ -53,6 +53,7 @@
 
     - name: Add Docker repository
       command: dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
+      when: flag_file.stat.exists == false
 
     - name: Install Docker packages
       dnf:
