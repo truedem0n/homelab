@@ -49,7 +49,15 @@
           - nfs-utils
           - ca-certificates
           - curl
+          - cronie
+          - cronie-anacron
         state: present
+
+    - name: Enable and start crond service
+      systemd:
+        name: crond
+        state: started
+        enabled: yes
 
     - name: Schedule playbook to run every 5 minutes
       cron:
