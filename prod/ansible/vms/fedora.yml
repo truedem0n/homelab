@@ -43,19 +43,36 @@
     - name: Install required packages
       dnf:
         name:
-          - podman
-          - podman-compose
-          - podman-docker
           - nfs-utils
           - ca-certificates
           - curl
           - cronie
           - cronie-anacron
+          - dnf-plugins-core
+        state: present
+
+    - name: Add Docker repository
+      command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+
+    - name: Install Docker packages
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
         state: present
 
     - name: Enable and start crond service
       systemd:
         name: crond
+        state: started
+        enabled: yes
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
         state: started
         enabled: yes
 
@@ -73,10 +90,10 @@
         special_time: "reboot"
         state: present
 
-    - name: Schedule podman system prune all
+    - name: Schedule docker system prune all
       cron:
-        name: "Run podman system prune with logging"
-        job: "/usr/bin/podman system prune -af > /var/log/podman-prune.log 2>&1"
+        name: "Run docker system prune with logging"
+        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
         special_time: "daily"
         state: present
 
@@ -98,4 +115,3 @@
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
         msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
-    
