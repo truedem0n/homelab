@@ -1,3 +1,9 @@
+# on host
+# vim /etc/pve/lxc/lxc_id.conf
+# add 
+# features: mount=nfs
+# on lxc
+# dnf install git ansible
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/vms/fedora.yml
 ---
 - name: Update and upgrade Fedora packages locally
@@ -56,40 +62,11 @@
           - cronie
           - cronie-anacron
           - dnf-plugins-core
-          - fuse
-          - fuse-libs
-          - fuse-overlayfs
-        state: present
-
-    - name: Ensure FUSE loads at boot
-      copy:
-        dest: /etc/modules-load.d/fuse.conf
-        content: "fuse"
-        mode: '0644'
-
-    - name: Add Docker repository
-      command: dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
-      when: flag_file.stat.exists == false
-
-    - name: Install Docker packages
-      dnf:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
         state: present
 
     - name: Enable and start crond service
       systemd:
         name: crond
-        state: started
-        enabled: yes
-
-    - name: Enable and start Docker service
-      systemd:
-        name: docker
         state: started
         enabled: yes
 
@@ -107,13 +84,6 @@
         special_time: "reboot"
         state: present
 
-    - name: Schedule docker system prune all
-      cron:
-        name: "Run docker system prune with logging"
-        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
-        special_time: "daily"
-        state: present
-
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
         path: /etc/fstab
@@ -125,10 +95,6 @@
         line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
-    - name: Print link to local IP with port 5001
-      ansible.builtin.debug:
-        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
-    
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
         msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
