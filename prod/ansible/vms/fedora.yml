@@ -31,6 +31,21 @@
         state: latest
         update_cache: yes
 
+    - name: Create user skylord with home directory
+      user:
+        name: skylord
+        create_home: yes
+        shell: /bin/bash
+        state: present
+
+    - name: Add skylord to sudoers
+      lineinfile:
+        path: /etc/sudoers.d/skylord
+        line: "skylord ALL=(ALL) NOPASSWD: ALL"
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
     - name: Check if the flag file exists
       stat:
         path: "{{ ansible_flag_path }}"
@@ -65,13 +80,6 @@
           - ncurses
           - vim
           - openssh-server
-        state: present
-
-    - name: Create skylord user
-      user:
-        name: skylord
-        create_home: yes
-        shell: /bin/bash
         state: present
 
     - name: Enable and start crond service
