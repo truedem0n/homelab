@@ -61,8 +61,15 @@
           - fuse-overlayfs
         state: present
 
+    - name: Check if FUSE is built into kernel
+      shell: grep FUSE_FS /boot/config-$(uname -r)
+      register: fuse_check
+      ignore_errors: yes
+
     - name: Load FUSE kernel module
       command: modprobe fuse
+      when: fuse_check.stdout != "CONFIG_FUSE_FS=y"
+
       
     - name: Ensure FUSE loads at boot
       copy:
