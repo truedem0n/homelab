@@ -67,6 +67,13 @@
           - openssh-server
         state: present
 
+    - name: Create skylord user
+      user:
+        name: skylord
+        create_home: yes
+        shell: /bin/bash
+        state: present
+
     - name: Enable and start crond service
       systemd:
         name: crond
