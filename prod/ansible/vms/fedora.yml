@@ -1,3 +1,4 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/vms/fedora.yml
 ---
 - name: Update and upgrade Fedora packages locally
   hosts: localhost
