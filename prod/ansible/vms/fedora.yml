@@ -62,6 +62,9 @@
           - cronie
           - cronie-anacron
           - dnf-plugins-core
+          - ncurses
+          - vim
+          - openssh-server
         state: present
 
     - name: Enable and start crond service
