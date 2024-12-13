@@ -56,7 +56,19 @@
           - cronie
           - cronie-anacron
           - dnf-plugins-core
+          - fuse
+          - fuse-libs
+          - fuse-overlayfs
         state: present
+
+    - name: Load FUSE kernel module
+      command: modprobe fuse
+      
+    - name: Ensure FUSE loads at boot
+      copy:
+        dest: /etc/modules-load.d/fuse.conf
+        content: "fuse"
+        mode: '0644'
 
     - name: Add Docker repository
       command: dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
