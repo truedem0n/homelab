@@ -10,7 +10,7 @@
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/dr.yml"
-    ansible_flag_path: "/ansible/ansible_first_run.flag"
+    ansible_flag_path: "/ansible/restic.flag"
     restic_lib_path: "/var/lib/restic"
     ntfy_topic_file: "~/ntfy_topic"
     files:
