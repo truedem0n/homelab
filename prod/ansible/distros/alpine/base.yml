@@ -48,6 +48,7 @@
         name:
           - curl
           - openssh-server
+          - rsync
         state: present
 
     - name: Schedule playbook to run every 5 minutes
