@@ -27,3 +27,10 @@
         job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
         special_time: "daily"
         state: present
+
+    - name: Ensure Docker is active
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+        
