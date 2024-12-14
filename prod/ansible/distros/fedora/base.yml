@@ -1,8 +1,3 @@
-# on host
-# vim /etc/pve/lxc/lxc_id.conf
-# add 
-# features: mount=nfs
-# on lxc
 # dnf install git ansible
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/distros/fedora/base.yml
 ---
@@ -101,18 +96,3 @@
         job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
-
-    - name: Ensure /etc/fstab exists
-      ansible.builtin.file:
-        path: /etc/fstab
-        state: touch
-
-    - name: Add NFS mount to /etc/fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
-        state: present
-
-    - name: Print link to local IP with port 5001
-      ansible.builtin.debug:
-        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
