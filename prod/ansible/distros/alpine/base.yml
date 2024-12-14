@@ -47,6 +47,7 @@
       ansible.builtin.package:
         name:
           - curl
+          - openssh-server
         state: present
 
     - name: Schedule playbook to run every 5 minutes
@@ -63,6 +64,8 @@
         special_time: "reboot"
         state: present
 
-    - name: Print link to local IP with port 5001
-      ansible.builtin.debug:
-        msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
+    - name: Ensure sshd is active
+      ansible.builtin.service:
+        name: sshd
+        state: started
+        enabled: yes
