@@ -1,0 +1,36 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/docker.yml
+---
+- name: install docker
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/playbooks/docker.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
+
+  tasks:
+    - name: Install base packages
+      ansible.builtin.package:
+        name:
+          - ca-certificates
+          - docker
+          - docker-cli
+          - docker-compose
+        state: present
+
+    - name: Schedule docker system prune all
+      cron:
+        name: "Run docker system prune with logging"
+        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
+        special_time: "daily"
+        state: present
+
+    - name: Ensure Docker is active
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+      when: flag_file.stat.exists == true

@@ -1,4 +1,4 @@
-# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/vms/alpine.yml
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/distros/alpine/base.yml
 ---
 - name: Update and upgrade Alpine packages locally
   hosts: localhost
@@ -8,7 +8,7 @@
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
-    ansible_playbook_path: "prod/ansible/vms/alpine.yml"
+    ansible_playbook_path: "prod/ansible/distros/alpine/base.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
@@ -43,15 +43,10 @@
         state: touch
       when: flag_file.stat.exists == false
 
-    - name: Install base packages
-      community.general.apk:
+    - name: Install packages
+      ansible.builtin.package:
         name:
-          - ca-certificates
           - curl
-          - docker
-          - docker-cli
-          - docker-compose
-          - nfs-utils
         state: present
 
     - name: Schedule playbook to run every 5 minutes
@@ -68,35 +63,6 @@
         special_time: "reboot"
         state: present
 
-    - name: Schedule docker system prune all
-      cron:
-        name: "Run docker system prune with logging"
-        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
-        special_time: "daily"
-        state: present
-
-    - name: Ensure /etc/fstab exists
-      ansible.builtin.file:
-        path: /etc/fstab
-        state: touch
-
-    - name: Add NFS mount to /etc/fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
-        state: present
-
     - name: Print link to local IP with port 5001
       ansible.builtin.debug:
         msg: "Dockge: http://{{ ansible_default_ipv4.address }}:5001"
-
-    - name: Reboot immediately if there was a change
-      ansible.builtin.command: /sbin/reboot
-      when: flag_file.stat.exists == false
-
-    - name: Ensure Docker is active
-      ansible.builtin.service:
-        name: docker
-        state: started
-        enabled: yes
-      when: flag_file.stat.exists == true
