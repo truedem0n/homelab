@@ -14,7 +14,8 @@
   tasks:
     - name: Update package cache
       community.general.apk:
-        update_cache: yes[2]
+        update_cache: true
+
 
     - name: Upgrade all packages
       community.general.apk:
