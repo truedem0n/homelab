@@ -49,6 +49,7 @@
           - curl
           - openssh-server
           - rsync
+          - sudo
         state: present
 
     - name: Schedule playbook to run every 5 minutes
