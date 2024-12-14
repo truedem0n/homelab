@@ -19,7 +19,7 @@
 
     - name: Upgrade all packages
       community.general.apk:
-        upgrade: yes[2]
+        upgrade: true
 
     - name: Check if the flag file exists
       stat:
