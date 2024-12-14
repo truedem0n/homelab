@@ -27,34 +27,34 @@
 
     - name: Create docker directory
       file:
-          path: "{{ item }}"
-          state: directory
-          mode: '0755'
-          recurse: yes
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        recurse: yes
       loop:
-          - /mnt/data/docker
+        - /mnt/data/docker
       when: flag_file.stat.exists == false
 
     - name: Perform initial rsync
       synchronize:
-          src: "{{ source_path }}"
-          dest: "{{ dest_path }}"
-          archive: yes
-          compress: yes
-          recursive: yes
+        src: "{{ source_path }}"
+        dest: "{{ dest_path }}"
+        archive: yes
+        compress: yes
+        recursive: yes
       rsync_opts:
           - "-e ssh"
       when: flag_file.stat.exists == false
 
     - name: Perform rsync syncs
       synchronize:
-          src: "{{ dest_path }}"
-          dest: "{{ source_path }}"
-          archive: yes
-          compress: yes
-          recursive: yes
+        src: "{{ dest_path }}"
+        dest: "{{ source_path }}"
+        archive: yes
+        compress: yes
+        recursive: yes
       rsync_opts:
-          - "-e ssh"
+        - "-e ssh"
       when: flag_file.stat.exists == true
 
     # - name: Schedule playbook to run every 5 minutes
