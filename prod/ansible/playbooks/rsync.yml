@@ -1,0 +1,67 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/rsync.yml
+---
+- name: rsync
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: yes
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/playbooks/rsync.yml"
+    ansible_flag_path: "/ansible/rsync_first_run.flag"
+    source_path: "skylord@192.168.1.106:/mnt/data/docker/network"
+    dest_path: "/mnt/data/docker/"
+
+  tasks:
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+    
+    - name: Create the flag file
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Create docker directory
+      file:
+          path: "{{ item }}"
+          state: directory
+          mode: '0755'
+          recurse: yes
+      loop:
+          - /mnt/data/docker
+      when: flag_file.stat.exists == false
+
+    - name: Perform initial rsync
+      synchronize:
+          src: "{{ source_path }}"
+          dest: "{{ dest_path }}"
+          archive: yes
+          compress: yes
+          recursive: yes
+      rsync_opts:
+          - "-e ssh"
+      when: flag_file.stat.exists == false
+
+    - name: Perform rsync syncs
+      synchronize:
+          src: "{{ dest_path }}"
+          dest: "{{ source_path }}"
+          archive: yes
+          compress: yes
+          recursive: yes
+      rsync_opts:
+          - "-e ssh"
+      when: flag_file.stat.exists == true
+
+    # - name: Schedule playbook to run every 5 minutes
+    #   cron:
+    #     name: "Run Ansible playbook every 5 minutes with logging"
+    #     job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/rsync-pull.log 2>&1"
+    #     minute: "*/5"
+    #     state: present
+    
+    
