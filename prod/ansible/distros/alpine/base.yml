@@ -50,7 +50,24 @@
           - openssh-server
           - rsync
           - sudo
+          - openssh
         state: present
+    
+    - name: Create user with home directory
+      user:
+        name: skylord
+        create_home: yes
+        home: /home/skylord
+        groups: wheel
+        state: present
+
+    - name: Allow wheel group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
 
     - name: Schedule playbook to run every 5 minutes
       cron:
