@@ -42,7 +42,7 @@
         archive: yes
         compress: yes
         recursive: yes
-      rsync_opts:
+        rsync_opts:
           - "-e ssh"
       when: flag_file.stat.exists == false
 
@@ -53,8 +53,8 @@
         archive: yes
         compress: yes
         recursive: yes
-      rsync_opts:
-        - "-e ssh"
+        rsync_opts:
+          - "-e ssh"
       when: flag_file.stat.exists == true
 
     # - name: Schedule playbook to run every 5 minutes
@@ -63,5 +63,5 @@
     #     job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/rsync-pull.log 2>&1"
     #     minute: "*/5"
     #     state: present
-    
-    
+
+
