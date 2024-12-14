@@ -52,7 +52,7 @@
           - docker-cli
           - docker-compose
           - nfs-utils
-        state: present[2][4]
+        state: present
 
     - name: Schedule playbook to run every 5 minutes
       cron:
