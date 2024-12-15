@@ -23,6 +23,7 @@
         name:
           - restic
           - curl
+          - bash
         state: present
 
     - name: Check if the flag file exists
