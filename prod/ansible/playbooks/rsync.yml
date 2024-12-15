@@ -28,7 +28,7 @@
 
     - name: Sync directories
       ansible.builtin.shell: |
-        rsync -avz --progress \
+        rsync -avz --progress --exclude='dockge_dockge' \
         --log-file=/var/log/rsync.log \
         {{ source_path }} {{ dest_path }}
 
