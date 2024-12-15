@@ -29,19 +29,24 @@
       stat:
         path: "{{ ansible_flag_path }}"
       register: flag_file
-
-    - name: Create a file with content
-      copy:
-        content: |
-          export AWS_ACCESS_KEY_ID=<B2_KEY_ID>
-          export AWS_SECRET_ACCESS_KEY=<B2_ApplicationKey>
-          export RESTIC_REPOSITORY="s3:s3.us-west-002.backblazeb2.com/s3restic2023"
-          export RESTIC_PASSWORD_FILE={{ restic_lib_path }}/restic-password
-        dest: "{{ restic_lib_path }}/restic-env"
-        mode: 0644
+    
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        recurse: yes
+      loop:
+        - /var/lib/restic
       when: flag_file.stat.exists == false
 
-    - name: Create the flag file
+    - name: Create restic env file
+      file:
+        path: "{{ restic_lib_path }}/restic-env"
+        state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Create the restic-password file
       file:
         path: "{{ restic_lib_path }}/restic-password"
         state: touch
@@ -53,20 +58,6 @@
         state: touch
       when: flag_file.stat.exists == false
 
-    - name: Schedule playbook to run every hour
-      cron:
-        name: "Run b2 backup playbook every 5 minutes with logging"
-        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
-        special_time: "daily"
-        state: present
-
-    - name: Schedule playbook to run at reboot with logging
-      cron:
-        name: "Run b2 backup playbook at reboot with logging"
-        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
-        special_time: "reboot"
-        state: present
-
     - name: Change ownership and permissions of files
       loop: "{{ files }}"
       file:
@@ -74,6 +65,23 @@
         owner: root
         group: root
         mode: 0700
+      when: flag_file.stat.exists == false
+
+    - name: Add secondary NFS mount to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "192.168.1.24:/var/nfs/shared /root/nuc_nfs nfs rw,sync,hard 0 0"
+        state: present
+    
+    - name: Add primary NFS mount to /etc/fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
+        state: present
+    
+    - name: End play if condition is met
+      meta: end_play
+      when: flag_file.stat.exists == false
 
     - name: Load restic environment variables
       ansible.builtin.include_vars:
@@ -91,12 +99,6 @@
     - name: Print restic backup output
       debug:
         var: restic_b2_output
-
-    - name: Add NFS mount to /etc/fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        line: "192.168.1.24:/var/nfs/shared /root/nuc_nfs nfs rw,sync,hard 0 0"
-        state: present
     
     - name: Run restic services local backup 
       shell: /usr/bin/restic -r ~/nuc_nfs/backups/restic-backup/ backup /mnt/data/docker/ --password-file ~/restic_p
@@ -121,3 +123,19 @@
       loop:
         - "{{ restic_b2_output }}"
         - "{{ restic_local_output }}"
+
+    - name: Schedule playbook to run every hour
+      cron:
+        name: "Run b2 backup playbook every 5 minutes with logging"
+        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
+        special_time: "daily"
+        state: present
+      when: flag_file.stat.exists == true
+
+    - name: Schedule playbook to run at reboot with logging
+      cron:
+        name: "Run b2 backup playbook at reboot with logging"
+        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
+        special_time: "reboot"
+        state: present
+      when: flag_file.stat.exists == true
