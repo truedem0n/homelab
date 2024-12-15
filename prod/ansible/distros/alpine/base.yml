@@ -35,6 +35,7 @@
       loop:
         - /ansible/
         - /mnt/data
+        - /var/log/ansible
       when: flag_file.stat.exists == false
 
     - name: Create the flag file
@@ -72,14 +73,14 @@
     - name: Schedule playbook to run every 5 minutes
       cron:
         name: "Run Ansible playbook every 5 minutes with logging"
-        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible/ansible-pull.log 2>&1"
         minute: "*/5"
         state: present
 
     - name: Schedule playbook to run at reboot with logging
       cron:
         name: "Run Ansible playbook at reboot with logging"
-        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
 
