@@ -32,9 +32,9 @@
         --log-file=/var/log/rsync.log \
         {{ source_path }} {{ dest_path }}
 
-    # - name: Schedule playbook to run every 5 minutes
-    #   cron:
-    #     name: "Run rsync playbook every 8 hours with logging"
-    #     job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible/rsync-ansible-pull.log 2>&1"
-    #     hour: "*/8"
-    #     state: present
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run rsync playbook every 8 hours with logging"
+        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible/rsync-ansible-pull.log 2>&1"
+        hour: "*/8"
+        state: present
