@@ -12,7 +12,7 @@
     ansible_playbook_path: "prod/ansible/playbooks/dr.yml"
     ansible_flag_path: "/ansible/restic.flag"
     restic_lib_path: "/var/lib/restic"
-    ntfy_topic_file: "~/ntfy_topic"
+    ntfy_topic_file: "/root/ntfy_topic"
     files:
       - path: "{{ restic_lib_path }}/restic-env"
       - path: "{{ restic_lib_path }}/restic-password"
@@ -101,7 +101,7 @@
         var: restic_b2_output
     
     - name: Run restic services local backup 
-      shell: /usr/bin/restic -r ~/nuc_nfs/backups/restic-backup/ backup /mnt/data/docker/ --password-file ~/restic_p
+      shell: /usr/bin/restic -r /root/nuc_nfs/backups/restic-backup/ backup /mnt/data/docker/ --password-file /root/restic_p
       args:
         executable: /bin/bash
       register: restic_local_output
