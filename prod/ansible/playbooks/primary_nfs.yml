@@ -1,6 +1,6 @@
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/primary_nfs.yml
 ---
-- name: Update and upgrade Alpine packages locally
+- name: Update and upgrade packages locally
   hosts: localhost
   connection: local
   become: yes
@@ -10,18 +10,19 @@
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/primary_nfs.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
+    nfs_packages:
+      Debian: nfs-common
+      Alpine: nfs-utils
+    nfs_services:
+      Debian: nfs-client.target
+      Alpine: nfsmount
 
   tasks:
-
-    - name: Install package based on distribution
+    - name: Install NFS package based on distribution
       package:
-        name: "{{ pkg_names[ansible_facts['distribution']] }}"
+        name: "{{ nfs_packages[ansible_facts['distribution']] }}"
         state: present
-      vars:
-        pkg_names:
-          Debian: nfs-common
-          Alpine: nfs-utils
-      when: ansible_facts['distribution'] in pkg_names
+      when: ansible_facts['distribution'] in nfs_packages
 
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
@@ -34,7 +35,15 @@
         line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
-    - name: Trigger reboot with 5 second delay
-      shell: "sleep 5 && reboot"
-      async: 1
-      poll: 0
+    - name: Ensure NFS service is active
+      ansible.builtin.service:
+        name: "{{ nfs_services[ansible_facts['distribution']] }}"
+        state: started
+        enabled: yes
+      when: ansible_facts['distribution'] in nfs_services
+
+    - name: Reboot system with 5 second delay
+      ansible.builtin.reboot:
+        msg: "System will reboot in 5 seconds"
+        pre_reboot_delay: 5
+        reboot_timeout: 300
