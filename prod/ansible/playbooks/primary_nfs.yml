@@ -21,8 +21,7 @@
         pkg_names:
           Debian: nfs-common
           Alpine: nfs-utils
-      when: ansible_facts['distribution'] == item[0]
-      loop: "{{ pkg_names | dict2items }}"
+      when: ansible_facts['distribution'] in pkg_names
 
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
