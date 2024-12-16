@@ -43,6 +43,6 @@
       when: ansible_facts['distribution'] in nfs_services
 
     - name: Trigger reboot with 5 second delay
-    shell: "sleep 5 && reboot"
-    async: 1
-    poll: 0
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
