@@ -19,6 +19,16 @@
     - name: Upgrade all packages
       apt:
         upgrade: dist
+    
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        recurse: yes
+      loop:
+        - /ansible/
+        - /mnt/data
 
     - name: Check if the flag file exists
       stat:
@@ -29,17 +39,6 @@
       file:
         path: "{{ ansible_flag_path }}"
         state: touch
-      when: flag_file.stat.exists == false
-
-    - name: Create required directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: '0755'
-        recurse: yes
-      loop:
-        - /ansible/
-        - /mnt/data
       when: flag_file.stat.exists == false
     
     - name: Install packages (debian)
