@@ -54,6 +54,7 @@
           - openssh
           - cfdisk 
           - e2fsprogs-extra
+          - lsblk
         state: present
     
     - name: Create user with home directory
