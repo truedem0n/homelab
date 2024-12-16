@@ -42,8 +42,7 @@
         enabled: yes
       when: ansible_facts['distribution'] in nfs_services
 
-    - name: Reboot system with 5 second delay
-      ansible.builtin.reboot:
-        msg: "System will reboot in 5 seconds"
-        pre_reboot_delay: 5
-        reboot_timeout: 300
+    - name: Trigger reboot with 5 second delay
+    shell: "sleep 5 && reboot"
+    async: 1
+    poll: 0
