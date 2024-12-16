@@ -12,11 +12,17 @@
     ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
-    - name: Install base packages
-      ansible.builtin.package:
-        name:
-          - nfs-utils
+
+    - name: Install package based on distribution
+      package:
+        name: "{{ item }}"
         state: present
+      vars:
+        pkg_names:
+          Debian: nfs-common
+          Alpine: nfs-utils
+      when: ansible_facts['distribution'] == item[0]
+      loop: "{{ pkg_names | dict2items }}"
 
     - name: Ensure /etc/fstab exists
       ansible.builtin.file:
