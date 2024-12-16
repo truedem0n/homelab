@@ -15,7 +15,7 @@
 
     - name: Install package based on distribution
       package:
-        name: "{{ item }}"
+        name: "{{ pkg_names[ansible_facts['distribution']] }}"
         state: present
       vars:
         pkg_names:
