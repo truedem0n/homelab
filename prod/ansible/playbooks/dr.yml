@@ -128,7 +128,7 @@
     - name: Schedule playbook to run daily
       cron:
         name: "Run b2 backup playbook every 5 minutes with logging"
-        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-dr.log 2>&1"
         special_time: "daily"
         state: present
       when: flag_file.stat.exists == true
@@ -136,7 +136,7 @@
     - name: Schedule playbook to run at reboot with logging
       cron:
         name: "Run b2 backup playbook at reboot with logging"
-        job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-dr.log 2>&1"
         special_time: "reboot"
         state: present
       when: flag_file.stat.exists == true
