@@ -34,8 +34,7 @@
         line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
-    - name: Ensure nfsmount is active
-      ansible.builtin.service:
-        name: nfsmount
-        state: started
-        enabled: yes
+    - name: Reboot system
+      ansible.builtin.reboot:
+        msg: "Rebooting system in 5 seconds"
+        pre_reboot_delay: 5
