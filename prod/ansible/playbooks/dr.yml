@@ -125,7 +125,7 @@
         - "{{ restic_b2_output }}"
         - "{{ restic_local_output }}"
 
-    - name: Schedule playbook to run every hour
+    - name: Schedule playbook to run daily
       cron:
         name: "Run b2 backup playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-playbook /mnt/data/ansible/homelab/prod/ansible/lxc/dr.yml > /var/log/ansible-backup.log 2>&1"
