@@ -34,7 +34,7 @@
         line: "192.168.1.26:/data/ /mnt/data nfs rw,sync,hard 0 0"
         state: present
 
-    - name: Reboot system
-      ansible.builtin.reboot:
-        msg: "Rebooting system in 5 seconds"
-        pre_reboot_delay: 5
+    - name: Trigger reboot with 5 second delay
+      shell: "sleep 5 && reboot"
+      async: 1
+      poll: 0
