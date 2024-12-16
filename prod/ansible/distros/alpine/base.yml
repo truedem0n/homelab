@@ -52,6 +52,8 @@
           - rsync
           - sudo
           - openssh
+          - cfdisk 
+          - e2fsprogs-extra
         state: present
     
     - name: Create user with home directory
