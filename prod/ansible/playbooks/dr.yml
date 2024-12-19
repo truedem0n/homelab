@@ -90,7 +90,7 @@
         name: restic_env
 
     - name: Run restic services B2 backup 
-      shell: /usr/bin/restic -r b2:locallab backup /mnt/data/docker/services/
+      shell: /usr/bin/restic -r b2:locallab backup --exclude=/mnt/data/docker/pmedia --exclude=/mnt/data/docker/legacy /mnt/data/docker/
       args:
         executable: /bin/bash
       environment: "{{ restic_env }}"
