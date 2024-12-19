@@ -10,8 +10,8 @@
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/rsync.yml"
     ansible_flag_path: "/ansible/rsync_first_run.flag"
-    source_path: "/var/lib/docker/volumes"
-    dest_path: "/mnt/data/docker/docker_volumes/"
+    source_path: "/var/lib/docker/volumes/*"
+    dest_path_prefix: "/mnt/data/docker/docker_volumes"
 
   tasks:
     - name: Create log directory
@@ -25,12 +25,16 @@
         name:
           - rsync
         state: present
+    
+    - name: Fetch hostname
+      ansible.builtin.command: hostname
+      register: host_name_output
 
     - name: Sync directories
       ansible.builtin.shell: |
         rsync -avz --progress --exclude='dockge_dockge' \
         --log-file=/var/log/rsync.log \
-        {{ source_path }} {{ dest_path }}
+        "{{ source_path }}" "{{ dest_path_prefix }}/{{ host_name_output.stdout }}/docker_volumes"
 
     - name: Schedule playbook to run every 8 hours
       cron:
