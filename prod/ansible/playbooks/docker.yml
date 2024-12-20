@@ -1,10 +1,10 @@
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/docker.yml
 ---
-- name: install docker
+- name: Install Docker
   hosts: localhost
   connection: local
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
@@ -12,51 +12,56 @@
     ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
-
     - name: Create /etc/apt/keyrings directory
-      file:
+      ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
-        mode: '0755'
+        mode: "0755"
       when: ansible_distribution == 'Debian'
 
     - name: Download Docker GPG key
-      get_url:
+      ansible.builtin.get_url:
         url: https://download.docker.com/linux/debian/gpg
         dest: /etc/apt/keyrings/docker.asc
-        mode: '0644'
+        mode: "0644"
       when: ansible_distribution == 'Debian'
 
     - name: Get distribution codename
-      command: lsb_release -cs
+      ansible.builtin.command:
+        cmd: lsb_release -cs
       register: dist_codename
       when: ansible_distribution == 'Debian'
 
     - name: Add Docker repository to Apt sources
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/apt/sources.list.d/docker.list
         line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ dist_codename.stdout }} stable"
-        create: yes
+        create: true
       when: ansible_distribution == 'Debian'
 
     - name: Update apt cache again
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
       when: ansible_distribution == 'Debian'
 
-    - name: Install packages
-      apt:
+    - name: Install Docker packages
+      ansible.builtin.apt:
         name:
           - docker-ce
           - docker-ce-cli
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
+        state: present
+      when: ansible_distribution == 'Debian'
+
+    - name: Install additional packages
+      ansible.builtin.apt:
+        name:
           - nfs-common
           - nfs4-acl-tools
         state: present
       when: ansible_distribution == 'Debian'
-
 
     - name: Install base packages
       ansible.builtin.package:
@@ -68,9 +73,9 @@
         state: present
       when: ansible_distribution != 'Debian'
 
-    - name: Schedule docker system prune all
-      cron:
-        name: "Run docker system prune with logging"
+    - name: Schedule Docker system prune
+      ansible.builtin.cron:
+        name: "Run Docker system prune with logging"
         job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
         special_time: "daily"
         state: present
@@ -79,5 +84,4 @@
       ansible.builtin.service:
         name: docker
         state: started
-        enabled: yes
-        
+        enabled: true
