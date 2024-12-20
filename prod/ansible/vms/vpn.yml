@@ -2,8 +2,8 @@
 - name: Update and upgrade Ubuntu packages locally
   hosts: localhost
   connection: local
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"

@@ -2,8 +2,8 @@
 - name: Update and upgrade Ubuntu packages locally
   hosts: localhost
   connection: local
-  become: yes
-  gather_facts: yes  # Disable gathering facts
+  become: true
+  gather_facts: true  # Disable gathering facts
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbook.yml"

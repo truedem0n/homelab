@@ -12,8 +12,8 @@
 - name: main playbook
   hosts: localhost
   connection: local
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
   tasks:
     - name: Create required directories
       file:
