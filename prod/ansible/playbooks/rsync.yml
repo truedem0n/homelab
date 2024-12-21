@@ -10,7 +10,7 @@
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/rsync.yml"
     ansible_flag_path: "/ansible/rsync_first_run.flag"
-    source_path: "/var/lib/docker/volumes"
+    source_path: "/var/lib/docker/volumes/"
     dest_path_prefix: "/mnt/data/docker"
 
   tasks:
