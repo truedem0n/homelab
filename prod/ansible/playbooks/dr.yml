@@ -39,6 +39,7 @@
         recurse: yes
       loop:
         - /var/lib/restic
+        - /mnt/backups
       when: flag_file.stat.exists == false
 
     - name: Create restic env file
@@ -71,7 +72,7 @@
     - name: Add secondary NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
         path: /etc/fstab
-        line: "192.168.1.24:/var/nfs/shared /root/nuc_nfs nfs rw,sync,hard 0 0"
+        line: "192.168.1.24:/var/nfs/shared /mnt/backups nfs rw,sync,hard 0 0"
         state: present
     
     - name: Add primary NFS mount to /etc/fstab
