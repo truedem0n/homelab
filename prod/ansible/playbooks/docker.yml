@@ -9,7 +9,6 @@
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/docker.yml"
-    ansible_flag_path: "/ansible/ansible_first_run.flag"
 
   tasks:
     - name: Create /etc/apt/keyrings directory
@@ -52,7 +51,6 @@
         recurse: yes
       loop:
         - /etc/docker/
-      when: flag_file.stat.exists == false
     
     - name: Configure Docker daemon
       copy:
