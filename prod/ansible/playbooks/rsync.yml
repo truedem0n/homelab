@@ -34,7 +34,7 @@
       ansible.builtin.shell: |
         rsync -avz --progress --exclude='dockge_dockge' \
         --log-file=/var/log/rsync.log \
-        "{{ source_path }}" "{{ dest_path_prefix }}/{{ host_name_output.stdout }}/docker_volumes"
+        "{{ source_path }}" "{{ dest_path_prefix }}/{{ host_name_output.stdout }}/docker_volumes" --delete
 
     - name: Schedule playbook to run every 8 hours
       cron:
