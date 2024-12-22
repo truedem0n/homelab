@@ -55,6 +55,7 @@
           - cfdisk 
           - e2fsprogs-extra
           - lsblk
+          - fuse
         state: present
     
     - name: Create user with home directory
@@ -92,3 +93,9 @@
         name: sshd
         state: started
         enabled: yes
+    
+    - name: Ensure FUSE module is loaded permanently
+      community.general.modprobe:
+        name: fuse
+        state: present
+        persistent: present
