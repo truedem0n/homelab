@@ -90,6 +90,13 @@
         state: present
       when: ansible_distribution != 'Debian'
 
+    - name: Install Docker SSHFS plugin
+      community.docker.docker_plugin:
+        plugin_name: vieux/sshfs
+        state: present
+        enabled: true
+        grant_permissions: true
+
     - name: Schedule Docker system prune
       ansible.builtin.cron:
         name: "Run Docker system prune with logging"
