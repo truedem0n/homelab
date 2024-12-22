@@ -105,7 +105,7 @@
       cron:
         name: "Run b2 backup playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-dr.log 2>&1"
-        special_time: "daily"
+        special_time: "weekly"
         state: present
       when: flag_file.stat.exists
 
