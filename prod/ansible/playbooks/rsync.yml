@@ -33,7 +33,6 @@
     - name: Sync directories
       ansible.builtin.shell: |
         rsync -avz --progress \
-        --exclude='dockge_dockge' \
         --exclude='backingFsBlockDev' \
         --exclude='metadata.db' \
         --log-file=/var/log/rsync.log \
