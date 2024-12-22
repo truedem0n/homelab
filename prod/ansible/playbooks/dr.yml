@@ -13,6 +13,9 @@
     ansible_playbook_path: "prod/ansible/playbooks/dr.yml"
     ansible_flag_path: "/ansible/restic.flag"
     restic_lib_path: "/var/lib/restic"
+    source_dir: /mnt/backups/partial-backup
+    backup_dir: /mnt/dropbox 
+    rotate_count: 5
 
   tasks:
     - name: Install packages
@@ -62,6 +65,41 @@
     - name: End play if condition is met
       meta: end_play
       when: flag_file.stat.exists == false
+
+
+
+    - name: Create and rotate tar backups
+      block:
+        - name: Create timestamp variable
+          set_fact:
+            timestamp: "{{ ansible_date_time.date }}"
+
+        - name: Create tar backup
+          archive:
+            path: "{{ source_dir }}"
+            dest: "{{ backup_dir }}/backup-{{ timestamp }}.tar.gz"
+            format: gz
+
+        - name: Find old backups
+          find:
+            paths: "{{ backup_dir }}"
+            patterns: "backup-*.tar.gz"
+            file_type: file
+          register: backup_files
+
+        - name: Sort backups by modification time
+          set_fact:
+            sorted_backups: "{{ backup_files.files | sort(attribute='mtime', reverse=true) }}"
+
+        - name: Remove old backups
+          file:
+            path: "{{ item.path }}"
+            state: absent
+          loop: "{{ sorted_backups[5:] }}"
+          when: sorted_backups|length > 5
+
+
+
 
     - name: Schedule playbook to run daily
       cron:
