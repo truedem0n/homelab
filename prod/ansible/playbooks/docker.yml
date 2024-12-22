@@ -102,10 +102,3 @@
         name: docker
         state: started
         enabled: true
-    
-    - name: Install Docker SSHFS plugin
-      community.docker.docker_plugin:
-        plugin_name: vieux/sshfs
-        state: present
-        enabled: true
-        grant_permissions: true
