@@ -1,4 +1,4 @@
-# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/primary_nfs.yml
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/mount_local_vols.yml
 ---
 - name: mount local vols on nuc
   hosts: localhost
