@@ -30,7 +30,6 @@
       loop:
         - /ansible/
         - /mnt/data
-        - /nfs/backups
 
     - name: Check if the flag file exists
       stat:
@@ -50,6 +49,7 @@
           - curl
           - vim
           - htop
+          - screen
         state: present
 
     - name: Add user to sudo group

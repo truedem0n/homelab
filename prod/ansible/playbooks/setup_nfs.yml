@@ -1,0 +1,49 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/setup_nfs.yml
+---
+- name: Update and upgrade packages locally
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/playbooks/setup_nfs.yml"
+  tasks:
+    - name: Install NFS packages
+      apt:
+        name: 
+          - nfs-kernel-server
+          - nfs-common
+        state: present
+        update_cache: yes
+
+    - name: Create NFS share directory
+      file:
+        path: /nfs/backups
+        state: directory
+        mode: '0755'
+        owner: nobody
+        group: nogroup
+
+    - name: Configure exports file
+      template:
+        src: exports.j2
+        dest: /etc/exports
+        mode: '0644'
+      notify: restart nfs
+
+    - name: Start and enable NFS services
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - nfs-kernel-server
+        - rpcbind
+
+  handlers:
+    - name: restart nfs
+      service:
+        name: nfs-kernel-server
+        state: restarted
