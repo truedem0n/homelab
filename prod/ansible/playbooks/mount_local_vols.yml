@@ -27,7 +27,7 @@
         src: /dev/sdb1 # dwo tb di
         path: /mnt/media
         fstype: exfat
-        opts: defaults
+        opts: "defaults,uid=1000,gid=1000,umask=000"
         state: mounted
     
     - name: Configure second permanent mount
@@ -35,5 +35,5 @@
         src: /dev/sdc1 # dwo tb di
         path: /mnt/backups
         fstype: exfat
-        opts: defaults
+        opts: "defaults,uid=1000,gid=1000,umask=000"
         state: mounted
