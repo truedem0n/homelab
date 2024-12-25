@@ -30,8 +30,6 @@
       loop:
         - /ansible/
         - /mnt/data
-        - /mnt/media
-        - /mnt/backups
         - /nfs/backups
 
     - name: Check if the flag file exists
