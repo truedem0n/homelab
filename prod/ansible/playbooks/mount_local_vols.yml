@@ -26,7 +26,6 @@
       ansible.posix.mount:
         src: /dev/sdb1 # dwo tb di
         path: /mnt/media
-        fstype: ext4
         opts: defaults
         state: mounted
     
@@ -34,6 +33,5 @@
       ansible.posix.mount:
         src: /dev/sdc1 # dwo tb di
         path: /mnt/backups
-        fstype: ext4
         opts: defaults
         state: mounted
