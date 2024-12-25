@@ -50,11 +50,11 @@
         state: touch
       when: flag_file.stat.exists == false
 
-    - name: Add secondary NFS mount to /etc/fstab
-      ansible.builtin.lineinfile:
-        path: /etc/fstab
-        line: "192.168.1.24:/var/nfs/shared /mnt/backups nfs ro,sync,hard 0 0"
-        state: present
+    # - name: Add secondary NFS mount to /etc/fstab
+    #   ansible.builtin.lineinfile:
+    #     path: /etc/fstab
+    #     line: "192.168.1.24:/var/nfs/shared /mnt/backups nfs ro,sync,hard 0 0"
+    #     state: present
     
     - name: Add primary NFS mount to /etc/fstab
       ansible.builtin.lineinfile:
