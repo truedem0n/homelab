@@ -10,6 +10,7 @@
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/distros/debian/base.yml"
     ansible_flag_path: "/ansible/ansible_first_run.flag"
+    ansible_user: "skylord"
 
   tasks:
     - name: Update package cache
@@ -49,6 +50,22 @@
           - vim
           - htop
         state: present
+
+    - name: Add user to sudo group
+      user:
+        name: "{{ ansible_user }}"
+        groups: sudo
+        append: yes
+
+    - name: Configure NOPASSWD sudo access
+      lineinfile:
+        path: /etc/sudoers.d/ansible-user
+        state: present
+        create: yes
+        mode: '0440'
+        line: '{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
 
     - name: Schedule playbook to run every 5 minutes
       cron:
