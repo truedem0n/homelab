@@ -18,6 +18,10 @@
       Alpine: nfsmount
 
   tasks:
+    - name: Print ansible_facts
+      ansible.builtin.debug:
+        var: ansible_facts
+        
     - name: Install NFS package based on distribution
       package:
         name: "{{ nfs_packages[ansible_facts['distribution']] }}"
