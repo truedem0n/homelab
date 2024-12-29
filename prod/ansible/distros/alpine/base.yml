@@ -100,6 +100,7 @@
         name: fuse
         state: present
         persistent: present
+      when: flag_file.stat.exists == false
     
     - name: Set default editor in .bashrc
       blockinfile:
