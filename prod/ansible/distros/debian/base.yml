@@ -51,6 +51,7 @@
           - vim
           - htop
           - screen
+          - neovim
         state: present
 
     - name: Add user to sudo group
