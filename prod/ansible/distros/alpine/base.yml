@@ -78,7 +78,7 @@
       cron:
         name: "Run Ansible playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible/ansible-pull.log 2>&1"
-        minute: "*/5"
+        special_time: "daily"
         state: present
 
     - name: Schedule playbook to run at reboot with logging
