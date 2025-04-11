@@ -26,12 +26,6 @@
         path: "{{ ansible_flag_path }}"
       register: flag_file
 
-    - name: Create the flag file if it does not exist
-      file:
-        path: "{{ ansible_flag_path }}"
-        state: touch
-      when: flag_file.stat.exists == false
-
     - name: Create required directories
       file:
         path: "{{ item }}"
@@ -41,6 +35,12 @@
       loop:
         - /ansible/
         - /mnt/data
+      when: flag_file.stat.exists == false
+    
+    - name: Create the flag file if it does not exist
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
       when: flag_file.stat.exists == false
 
     - name: Install packages (ubuntu)
