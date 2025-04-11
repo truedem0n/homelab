@@ -1,136 +1,96 @@
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/docker.yml
-# This command pulls the playbook from the specified git repository and runs it locally.
-# The playbook below assumes it's being run on the target Ubuntu host.
+
 ---
 - name: Install Docker on Debian/Ubuntu
-  hosts: localhost        # Targets the machine running ansible-pull
-  connection: local     # Executes modules directly, not over SSH
-  become: true          # Executes tasks with root privileges (sudo)
-  gather_facts: true    # Essential for accessing facts like ansible_lsb.codename
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true # Ensure facts are gathered
 
-  # Optional: Define the main user you want to add to the docker group
   vars:
-    install_docker_compose: true # Set to false if you don't need Docker Compose V2 plugin
-    user_to_add_to_docker_group: "{{ ansible_env.SUDO_USER | default(ansible_user) }}"
-    docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
-    docker_keyring_path: "/etc/apt/keyrings/docker.gpg" # Final dearmored key path
-    docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}" # Ensure correct arch mapping if needed
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/playbooks/docker.yml"
+    docker_users:
+      - "{{ ansible_user_id }}"  # Add the current user to docker group
 
   tasks:
     - name: Update apt cache
-      ansible.builtin.apt:
+      apt:
         update_cache: yes
-        cache_valid_time: 3600 # Update only if cache is older than 1 hour
-      tags: [docker, install, prerequisites]
+        cache_valid_time: 3600
 
-    - name: Install prerequisite packages
-      ansible.builtin.apt:
+    - name: Install required packages
+      apt:
         name:
           - ca-certificates
           - curl
-          - gnupg # Ensure gnupg is installed for dearmoring
-          - lsb-release # Provides lsb_release command used later
+          - gnupg
+          - lsb-release
+          - apt-transport-https
+          - software-properties-common
         state: present
-      tags: [docker, install, prerequisites]
 
-    - name: Remove old conflicting docker packages if they exist
-      ansible.builtin.apt:
-        name:
-          - docker
-          - docker-engine
-          - docker.io
-          - containerd
-          - runc
-        state: absent
-      tags: [docker, install, cleanup]
-
-    # --- Add Docker Official GPG Key ---
-    - name: Create directory for Docker GPG keyrings if it doesn't exist
-      ansible.builtin.file:
-        path: "{{ docker_keyring_path | dirname }}" # Gets /etc/apt/keyrings
+    - name: Create directory for Docker GPG key
+      file:
+        path: /etc/apt/keyrings
         state: directory
         mode: '0755'
-      tags: [docker, install, prerequisites]
 
-    - name: Download Docker's official GPG key (ASCII-armored)
-      ansible.builtin.get_url:
-        url: "{{ docker_gpg_key_url }}"
-        dest: "{{ docker_keyring_path }}.asc" # Download as .asc temporarily
+    - name: Add Docker's official GPG key
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Set correct permissions for the GPG key
+      file:
+        path: /etc/apt/keyrings/docker.gpg
         mode: '0644'
-        force: true # Overwrite if exists to ensure latest key
-      tags: [docker, install, prerequisites]
 
-    - name: Dearmor Docker's official GPG key
-      ansible.builtin.command:
-        cmd: "gpg --dearmor -o {{ docker_keyring_path }} {{ docker_keyring_path }}.asc"
-        creates: "{{ docker_keyring_path }}" # Makes task idempotent, only runs if final .gpg file doesn't exist
-      changed_when: true # Assume dearmoring always changes state if it runs
-      tags: [docker, install, prerequisites]
+    - name: Set up Docker repository
+      shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg](https://download.docker.com/linux/ubuntu) $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        creates: /etc/apt/sources.list.d/docker.list
 
-    - name: Ensure correct permissions on dearmored GPG key
-      ansible.builtin.file:
-        path: "{{ docker_keyring_path }}"
-        mode: '0644'
-      tags: [docker, install, prerequisites]
+    - name: Update apt cache again after adding repository
+      apt:
+        update_cache: yes
 
-    - name: Remove temporary ASCII-armored GPG key
-      ansible.builtin.file:
-        path: "{{ docker_keyring_path }}.asc"
-        state: absent
-      tags: [docker, install, prerequisites]
-
-    # --- Set up Docker Repository ---
-    - name: Add Docker APT repository
-      ansible.builtin.apt_repository:
-        repo: >-
-          deb [arch={{ docker_apt_arch }} signed-by={{ docker_keyring_path }}]
-          https://download.docker.com/linux/ubuntu
-          {{ ansible_lsb.codename }}
-          stable
-        state: present
-        filename: docker # Creates /etc/apt/sources.list.d/docker.list
-        update_cache: yes # Update cache after adding repo
-      tags: [docker, install, prerequisites]
-      # Example resulting line for amd64 jammy:
-      # deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable
-
-    # --- Install Docker Engine ---
-    - name: Install Docker Engine, CLI, Containerd, and Plugin (Conditional Compose)
-      ansible.builtin.apt:
+    - name: Install Docker Engine
+      apt:
         name:
-          - docker-ce         # Docker Engine
-          - docker-ce-cli     # Docker Command Line Interface
-          - containerd.io     # Container Runtime
-          - docker-buildx-plugin # Buildx plugin (often needed)
-          - "{{ 'docker-compose-plugin' if install_docker_compose | bool else omit }}" # Conditionally add compose plugin
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
         state: present
-        update_cache: yes # Ensure cache is updated before install
-      tags: [docker, install, core]
 
-    # --- Post-installation steps ---
-    - name: Ensure docker group exists
-      ansible.builtin.group:
-        name: docker
-        state: present
-      tags: [docker, config]
-
-    - name: Add specified user to the docker group
-      ansible.builtin.user:
-        name: "{{ user_to_add_to_docker_group }}"
-        groups: docker
-        append: yes # Important: do not remove existing groups
-      when: user_to_add_to_docker_group is defined and user_to_add_to_docker_group != "" and user_to_add_to_docker_group != "root"
-      tags: [docker, config]
-      notify: Inform user about group change
-
-    - name: Ensure Docker service is started and enabled
-      ansible.builtin.systemd:
+    - name: Start and enable Docker service
+      systemd:
         name: docker
         state: started
         enabled: yes
-      tags: [docker, service]
 
-  handlers:
-    - name: Inform user about group change
-      ansible.builtin.debug:
-        msg: "User '{{ user_to_add_to_docker_group }}' was added to the 'docker' group. You may need to log out and log back in for this change to take effect."
+    - name: Add users to Docker group
+      user:
+        name: "{{ item }}"
+        groups: docker
+        append: yes
+      loop: "{{ docker_users }}"
+      when: docker_users is defined
+
+    - name: Install docker-compose via pip
+      pip:
+        name: docker-compose
+        state: present
+      become: true
+
+    - name: Test Docker installation
+      command: docker run hello-world
+      register: test_output
+      changed_when: false
+
+    - name: Show Docker test output
+      debug:
+        var: test_output.stdout_lines
