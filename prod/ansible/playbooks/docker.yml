@@ -1,58 +1,63 @@
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/docker.yml
 ---
-- name: Install Docker
+- name: Install Docker on Debian/Ubuntu
   hosts: localhost
   connection: local
   become: true
-  gather_facts: true
+  gather_facts: true # Ensure facts are gathered to get ansible_distribution
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/docker.yml"
 
   tasks:
-    - name: Create /etc/apt/keyrings directory
+    # --- Docker Installation for Debian/Ubuntu ---
+    - name: Install prerequisites for Docker APT repository
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg # Required for adding GPG keys securely
+        state: present
+        update_cache: true
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    - name: Create /etc/apt/keyrings directory if it doesn't exist
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
         mode: "0755"
-      when: ansible_distribution == 'Debian'
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Download Docker GPG key
       ansible.builtin.get_url:
-        url: https://download.docker.com/linux/debian/gpg
+        # Use the distribution name dynamically in the URL
+        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         dest: /etc/apt/keyrings/docker.asc
         mode: "0644"
-      when: ansible_distribution == 'Debian'
+        force: true # Overwrite if exists, helpful for key updates
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Get distribution codename
       ansible.builtin.command:
         cmd: lsb_release -cs
       register: dist_codename
-      when: ansible_distribution == 'Debian'
+      changed_when: false # This command doesn't change system state
+      check_mode: false # Always run this command, even in check mode
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Add Docker repository to Apt sources
-      ansible.builtin.lineinfile:
-        path: /etc/apt/sources.list.d/docker.list
-        line: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ dist_codename.stdout }} stable"
-        create: true
-      when: ansible_distribution == 'Debian'
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ dist_codename.stdout }} stable"
+        filename: docker # Creates /etc/apt/sources.list.d/docker.list
+        state: present
+        update_cache: true # Update cache after adding repo
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+      # Note: apt_repository handles creating the file and updating cache more idempotently
 
-    - name: Update apt cache again
-      ansible.builtin.apt:
-        update_cache: true
-      when: ansible_distribution == 'Debian'
-    
-    - name: Create required directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: '0755'
-        recurse: yes
-      loop:
-        - /etc/docker/
+    # Removed the separate apt update task as apt_repository handles it
 
-    - name: Install Docker packages
+    - name: Install Docker packages (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
           - docker-ce
@@ -61,44 +66,48 @@
           - docker-buildx-plugin
           - docker-compose-plugin
         state: present
-      when: ansible_distribution == 'Debian'
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: Install additional packages
+    - name: Install additional useful packages (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
-          - nfs-common
-          - nfs4-acl-tools
+          - nfs-common       # If using NFS volumes with Docker
+          # - nfs4-acl-tools # Uncomment if needed
         state: present
-      when: ansible_distribution == 'Debian'
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    - name: Install base packages
-      ansible.builtin.package:
-        name:
-          - ca-certificates
-          - docker
-          - docker-cli
-          - docker-compose
-        state: present
-      when: ansible_distribution != 'Debian'
+    # --- Common Configuration (Applies to all supported OS) ---
+    - name: Create Docker configuration directory
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: '0755'
 
-    - name: Schedule Docker system prune
-      ansible.builtin.cron:
-        name: "Run Docker system prune with logging"
-        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
-        special_time: "daily"
-        state: present
-
-    - name: Ensure Docker is active
-      ansible.builtin.service:
-        name: docker
-        state: started
-        enabled: true
-
-    - name: Configure Docker daemon
-      copy:
+    - name: Configure Docker daemon to listen on TCP and Socket
+      ansible.builtin.copy:
         content: |
           {
             "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
           }
         dest: /etc/docker/daemon.json
         mode: '0644'
+      notify: Restart Docker Service # Notify handler to restart Docker after config change
+
+    - name: Schedule daily Docker system prune
+      ansible.builtin.cron:
+        name: "Run Docker system prune with logging"
+        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
+        special_time: "daily"
+        state: present
+
+    - name: Ensure Docker service is started and enabled
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Restart Docker Service
+      ansible.builtin.service:
+        name: docker
+        state: restarted
