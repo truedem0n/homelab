@@ -1,0 +1,92 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/distros/ubuntu/base.yml
+---
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/distros/ubuntu/base.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
+    ansible_user: "skylord"
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+
+    - name: Create the flag file if it does not exist
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+        recurse: yes
+      loop:
+        - /ansible/
+        - /mnt/data
+      when: flag_file.stat.exists == false
+
+    - name: Install packages (ubuntu)
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - vim
+          - htop
+          - screen
+          - neovim
+        state: present
+
+    - name: Add user to sudo group
+      user:
+        name: "{{ ansible_user }}"
+        groups: sudo
+        append: yes
+
+    - name: Configure NOPASSWD sudo access
+      lineinfile:
+        path: /etc/sudoers.d/ansible-user
+        state: present
+        create: yes
+        mode: "0440"
+        line: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
+        validate: "visudo -cf %s"
+
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run Ansible playbook every 5 minutes with logging"
+        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        special_time: "daily"
+        state: present
+
+    - name: Schedule playbook to run at reboot with logging
+      cron:
+        name: "Run Ansible playbook at reboot with logging"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        special_time: "reboot"
+        state: present
+    
+    - name: Set default editor in .bashrc
+      blockinfile:
+        path: ~/.bashrc
+        block: |
+          export EDITOR='nvim'
+          export VISUAL='nvim'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK EDITOR"
