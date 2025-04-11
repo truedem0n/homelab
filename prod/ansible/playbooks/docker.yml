@@ -4,22 +4,22 @@
   hosts: localhost
   connection: local
   become: true
-  gather_facts: true # Ensure facts are gathered to get ansible_distribution
+  gather_facts: true # Ensure facts are gathered
 
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/docker.yml"
 
   tasks:
-    # --- Docker Installation for Debian/Ubuntu ---
+    # --- Docker Installation Prerequisites for Debian/Ubuntu ---
     - name: Install prerequisites for Docker APT repository
       ansible.builtin.apt:
         name:
           - ca-certificates
           - curl
-          - gnupg # Required for adding GPG keys securely
+          - gnupg
         state: present
-        update_cache: true
+        update_cache: true # Update cache once at the beginning
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Create /etc/apt/keyrings directory if it doesn't exist
@@ -31,32 +31,38 @@
 
     - name: Download Docker GPG key
       ansible.builtin.get_url:
-        # Use the distribution name dynamically in the URL
         url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
         dest: /etc/apt/keyrings/docker.asc
         mode: "0644"
-        force: true # Overwrite if exists, helpful for key updates
+        force: true
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
     - name: Get distribution codename
       ansible.builtin.command:
         cmd: lsb_release -cs
       register: dist_codename
-      changed_when: false # This command doesn't change system state
-      check_mode: false # Always run this command, even in check mode
+      changed_when: false
+      check_mode: false # This task should always run, even in check mode
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+      failed_when: dist_codename.rc != 0 # Fail if lsb_release command fails
 
     - name: Add Docker repository to Apt sources
       ansible.builtin.apt_repository:
         repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ dist_codename.stdout }} stable"
-        filename: docker # Creates /etc/apt/sources.list.d/docker.list
+        filename: docker
         state: present
-        update_cache: true # Update cache after adding repo
+        # update_cache: true # We'll do an explicit update next
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-      # Note: apt_repository handles creating the file and updating cache more idempotently
 
-    # Removed the separate apt update task as apt_repository handles it
+    # --- Explicit APT Cache Update ---
+    - name: Update apt cache after adding Docker repo
+      ansible.builtin.apt:
+        update_cache: true
+        # cache_valid_time: 3600 # Optional: Avoid updating if cache is recent
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+      changed_when: false # Cache update itself doesn't represent a configuration change
 
+    # --- Install Docker Packages ---
     - name: Install Docker packages (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
@@ -71,12 +77,11 @@
     - name: Install additional useful packages (Debian/Ubuntu)
       ansible.builtin.apt:
         name:
-          - nfs-common       # If using NFS volumes with Docker
-          # - nfs4-acl-tools # Uncomment if needed
+          - nfs-common
         state: present
       when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
-    # --- Common Configuration (Applies to all supported OS) ---
+    # --- Common Configuration ---
     - name: Create Docker configuration directory
       ansible.builtin.file:
         path: /etc/docker
@@ -91,7 +96,7 @@
           }
         dest: /etc/docker/daemon.json
         mode: '0644'
-      notify: Restart Docker Service # Notify handler to restart Docker after config change
+      notify: Restart Docker Service
 
     - name: Schedule daily Docker system prune
       ansible.builtin.cron:
