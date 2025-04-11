@@ -52,7 +52,7 @@
           - htop
           - screen
           - neovim
-          - crontab
+          - cron
         state: present
 
     - name: Add user to sudo group
