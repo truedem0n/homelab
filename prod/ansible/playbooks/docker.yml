@@ -9,15 +9,12 @@
   gather_facts: true    # Essential for accessing facts like ansible_lsb.codename
 
   # Optional: Define the main user you want to add to the docker group
-  # You might want to set this via extra-vars in a real ansible-pull setup if needed
   vars:
     install_docker_compose: true # Set to false if you don't need Docker Compose V2 plugin
-    # Define the user who should be able to run docker without sudo
-    # ansible_user is the user running ansible-pull.
-    # If ansible-pull is run with sudo, ansible_user might be root.
-    # ansible_env.SUDO_USER is often the original user who invoked sudo. Use with caution.
-    # Best practice: define this explicitly, e.g., 'ubuntu', 'admin'
     user_to_add_to_docker_group: "{{ ansible_env.SUDO_USER | default(ansible_user) }}"
+    docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+    docker_keyring_path: "/etc/apt/keyrings/docker.gpg" # Final dearmored key path
+    docker_apt_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}" # Ensure correct arch mapping if needed
 
   tasks:
     - name: Update apt cache
@@ -31,7 +28,7 @@
         name:
           - ca-certificates
           - curl
-          - gnupg
+          - gnupg # Ensure gnupg is installed for dearmoring
           - lsb-release # Provides lsb_release command used later
         state: present
       tags: [docker, install, prerequisites]
@@ -48,26 +45,45 @@
       tags: [docker, install, cleanup]
 
     # --- Add Docker Official GPG Key ---
-    - name: Create directory for Docker GPG key if it doesn't exist
+    - name: Create directory for Docker GPG keyrings if it doesn't exist
       ansible.builtin.file:
-        path: /etc/apt/keyrings
+        path: "{{ docker_keyring_path | dirname }}" # Gets /etc/apt/keyrings
         state: directory
         mode: '0755'
       tags: [docker, install, prerequisites]
 
-    - name: Download Docker's official GPG key
+    - name: Download Docker's official GPG key (ASCII-armored)
       ansible.builtin.get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/docker.gpg
+        url: "{{ docker_gpg_key_url }}"
+        dest: "{{ docker_keyring_path }}.asc" # Download as .asc temporarily
         mode: '0644'
         force: true # Overwrite if exists to ensure latest key
+      tags: [docker, install, prerequisites]
+
+    - name: Dearmor Docker's official GPG key
+      ansible.builtin.command:
+        cmd: "gpg --dearmor -o {{ docker_keyring_path }} {{ docker_keyring_path }}.asc"
+        creates: "{{ docker_keyring_path }}" # Makes task idempotent, only runs if final .gpg file doesn't exist
+      changed_when: true # Assume dearmoring always changes state if it runs
+      tags: [docker, install, prerequisites]
+
+    - name: Ensure correct permissions on dearmored GPG key
+      ansible.builtin.file:
+        path: "{{ docker_keyring_path }}"
+        mode: '0644'
+      tags: [docker, install, prerequisites]
+
+    - name: Remove temporary ASCII-armored GPG key
+      ansible.builtin.file:
+        path: "{{ docker_keyring_path }}.asc"
+        state: absent
       tags: [docker, install, prerequisites]
 
     # --- Set up Docker Repository ---
     - name: Add Docker APT repository
       ansible.builtin.apt_repository:
         repo: >-
-          deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg]
+          deb [arch={{ docker_apt_arch }} signed-by={{ docker_keyring_path }}]
           https://download.docker.com/linux/ubuntu
           {{ ansible_lsb.codename }}
           stable
@@ -79,29 +95,16 @@
       # deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable
 
     # --- Install Docker Engine ---
-    - name: Install Docker Engine, CLI, Containerd, and Plugin
+    - name: Install Docker Engine, CLI, Containerd, and Plugin (Conditional Compose)
       ansible.builtin.apt:
         name:
           - docker-ce         # Docker Engine
           - docker-ce-cli     # Docker Command Line Interface
           - containerd.io     # Container Runtime
           - docker-buildx-plugin # Buildx plugin (often needed)
-          - docker-compose-plugin # Docker Compose V2 (if var is true)
+          - "{{ 'docker-compose-plugin' if install_docker_compose | bool else omit }}" # Conditionally add compose plugin
         state: present
         update_cache: yes # Ensure cache is updated before install
-      when: install_docker_compose | bool # Use the variable to control compose install
-      tags: [docker, install, core]
-
-    - name: Install Docker Engine, CLI, Containerd (without Compose Plugin)
-      ansible.builtin.apt:
-        name:
-          - docker-ce         # Docker Engine
-          - docker-ce-cli     # Docker Command Line Interface
-          - containerd.io     # Container Runtime
-          - docker-buildx-plugin # Buildx plugin (often needed)
-        state: present
-        update_cache: yes # Ensure cache is updated before install
-      when: not (install_docker_compose | bool) # Use the variable to control compose install
       tags: [docker, install, core]
 
     # --- Post-installation steps ---
