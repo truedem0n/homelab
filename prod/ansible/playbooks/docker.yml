@@ -1,120 +1,133 @@
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/docker.yml
+# This command pulls the playbook from the specified git repository and runs it locally.
+# The playbook below assumes it's being run on the target Ubuntu host.
 ---
 - name: Install Docker on Debian/Ubuntu
-  hosts: localhost
-  connection: local
-  become: true
-  gather_facts: true # Ensure facts are gathered
+  hosts: localhost        # Targets the machine running ansible-pull
+  connection: local     # Executes modules directly, not over SSH
+  become: true          # Executes tasks with root privileges (sudo)
+  gather_facts: true    # Essential for accessing facts like ansible_lsb.codename
 
+  # Optional: Define the main user you want to add to the docker group
+  # You might want to set this via extra-vars in a real ansible-pull setup if needed
   vars:
-    git_repo_url: "https://github.com/truedem0n/homelab.git"
-    ansible_playbook_path: "prod/ansible/playbooks/docker.yml"
+    install_docker_compose: true # Set to false if you don't need Docker Compose V2 plugin
+    # Define the user who should be able to run docker without sudo
+    # ansible_user is the user running ansible-pull.
+    # If ansible-pull is run with sudo, ansible_user might be root.
+    # ansible_env.SUDO_USER is often the original user who invoked sudo. Use with caution.
+    # Best practice: define this explicitly, e.g., 'ubuntu', 'admin'
+    user_to_add_to_docker_group: "{{ ansible_env.SUDO_USER | default(ansible_user) }}"
 
   tasks:
-    # --- Docker Installation Prerequisites for Debian/Ubuntu ---
-    - name: Install prerequisites for Docker APT repository
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600 # Update only if cache is older than 1 hour
+      tags: [docker, install, prerequisites]
+
+    - name: Install prerequisite packages
       ansible.builtin.apt:
         name:
           - ca-certificates
           - curl
           - gnupg
+          - lsb-release # Provides lsb_release command used later
         state: present
-        update_cache: true # Update cache once at the beginning
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+      tags: [docker, install, prerequisites]
 
-    - name: Create /etc/apt/keyrings directory if it doesn't exist
+    - name: Remove old conflicting docker packages if they exist
+      ansible.builtin.apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+      tags: [docker, install, cleanup]
+
+    # --- Add Docker Official GPG Key ---
+    - name: Create directory for Docker GPG key if it doesn't exist
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
-        mode: "0755"
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
-    - name: Download Docker GPG key
-      ansible.builtin.get_url:
-        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
-        dest: /etc/apt/keyrings/docker.asc
-        mode: "0644"
-        force: true
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
-    - name: Get distribution codename
-      ansible.builtin.command:
-        cmd: lsb_release -cs
-      register: dist_codename
-      changed_when: false
-      check_mode: false # This task should always run, even in check mode
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-      failed_when: dist_codename.rc != 0 # Fail if lsb_release command fails
-
-    - name: Add Docker repository to Apt sources
-      ansible.builtin.apt_repository:
-        # FORCE amd64 architecture identifier, as Docker uses this instead of x86_64
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ dist_codename.stdout }} stable"
-        filename: docker
-        state: present
-      when: >
-        (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu') and
-        (ansible_architecture == 'x86_64' or ansible_architecture == 'amd64')
-      # Note: If you need ARM support later, you'll need to adjust the arch mapping (e.g., aarch64 -> arm64)
-
-    # --- Explicit APT Cache Update ---
-    - name: Update apt cache after adding Docker repo
-      ansible.builtin.apt:
-        update_cache: true
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-      changed_when: false # Cache update itself doesn't represent a configuration change
-
-    # --- Install Docker Packages ---
-    - name: Install Docker packages (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
-        state: present
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
-    - name: Install additional useful packages (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name:
-          - nfs-common
-        state: present
-      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-
-    # --- Common Configuration ---
-    - name: Create Docker configuration directory
-      ansible.builtin.file:
-        path: /etc/docker
-        state: directory
         mode: '0755'
+      tags: [docker, install, prerequisites]
 
-    - name: Configure Docker daemon to listen on TCP and Socket
-      ansible.builtin.copy:
-        content: |
-          {
-            "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
-          }
-        dest: /etc/docker/daemon.json
+    - name: Download Docker's official GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.gpg
         mode: '0644'
-      notify: Restart Docker Service
+        force: true # Overwrite if exists to ensure latest key
+      tags: [docker, install, prerequisites]
 
-    - name: Schedule daily Docker system prune
-      ansible.builtin.cron:
-        name: "Run Docker system prune with logging"
-        job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
-        special_time: "daily"
+    # --- Set up Docker Repository ---
+    - name: Add Docker APT repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_lsb.codename }}
+          stable
         state: present
+        filename: docker # Creates /etc/apt/sources.list.d/docker.list
+        update_cache: yes # Update cache after adding repo
+      tags: [docker, install, prerequisites]
+      # Example resulting line for amd64 jammy:
+      # deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable
+
+    # --- Install Docker Engine ---
+    - name: Install Docker Engine, CLI, Containerd, and Plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce         # Docker Engine
+          - docker-ce-cli     # Docker Command Line Interface
+          - containerd.io     # Container Runtime
+          - docker-buildx-plugin # Buildx plugin (often needed)
+          - docker-compose-plugin # Docker Compose V2 (if var is true)
+        state: present
+        update_cache: yes # Ensure cache is updated before install
+      when: install_docker_compose | bool # Use the variable to control compose install
+      tags: [docker, install, core]
+
+    - name: Install Docker Engine, CLI, Containerd (without Compose Plugin)
+      ansible.builtin.apt:
+        name:
+          - docker-ce         # Docker Engine
+          - docker-ce-cli     # Docker Command Line Interface
+          - containerd.io     # Container Runtime
+          - docker-buildx-plugin # Buildx plugin (often needed)
+        state: present
+        update_cache: yes # Ensure cache is updated before install
+      when: not (install_docker_compose | bool) # Use the variable to control compose install
+      tags: [docker, install, core]
+
+    # --- Post-installation steps ---
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+      tags: [docker, config]
+
+    - name: Add specified user to the docker group
+      ansible.builtin.user:
+        name: "{{ user_to_add_to_docker_group }}"
+        groups: docker
+        append: yes # Important: do not remove existing groups
+      when: user_to_add_to_docker_group is defined and user_to_add_to_docker_group != "" and user_to_add_to_docker_group != "root"
+      tags: [docker, config]
+      notify: Inform user about group change
 
     - name: Ensure Docker service is started and enabled
-      ansible.builtin.service:
+      ansible.builtin.systemd:
         name: docker
         state: started
-        enabled: true
+        enabled: yes
+      tags: [docker, service]
 
   handlers:
-    - name: Restart Docker Service
-      ansible.builtin.service:
-        name: docker
-        state: restarted
+    - name: Inform user about group change
+      ansible.builtin.debug:
+        msg: "User '{{ user_to_add_to_docker_group }}' was added to the 'docker' group. You may need to log out and log back in for this change to take effect."
