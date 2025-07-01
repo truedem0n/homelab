@@ -45,6 +45,7 @@
         state: present
     
     - name: Install Caddy
+      when: flag_file.stat.exists == false
       apt:
         deb: "https://github.com/caddyserver/caddy/releases/latest/download/caddy_2.10.0_linux_arm64.deb"
 
