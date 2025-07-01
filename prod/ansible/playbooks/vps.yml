@@ -1,0 +1,64 @@
+# /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/vps.yml
+---
+- name: Update and upgrade Ubuntu packages locally
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  vars:
+    git_repo_url: "https://github.com/truedem0n/homelab.git"
+    ansible_playbook_path: "prod/ansible/playbooks/vps.yml"
+    ansible_flag_path: "/ansible/ansible_first_run.flag"
+    ansible_user: "skylord"
+
+  tasks:
+
+    - name: Check if the flag file exists
+      stat:
+        path: "{{ ansible_flag_path }}"
+      register: flag_file
+
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+        recurse: yes
+      loop:
+        - /ansible/
+        - /mnt/data
+      when: flag_file.stat.exists == false
+
+    - name: Create the flag file if it does not exist
+      file:
+        path: "{{ ansible_flag_path }}"
+        state: touch
+      when: flag_file.stat.exists == false
+
+    - name: Install packages (debian)
+      apt:
+        name:
+          - curl
+          - vim
+          - wireguard
+        state: present
+    
+    - name: Install Caddy
+      apt:
+        deb: "https://github.com/caddyserver/caddy/releases/latest/download/caddy_2.10.0_linux_arm64.deb"
+
+
+    - name: Schedule playbook to run every 5 minutes
+      cron:
+        name: "Run Ansible playbook every 5 minutes with logging"
+        job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        special_time: "daily"
+        state: present
+
+    - name: Schedule playbook to run at reboot with logging
+      cron:
+        name: "Run Ansible playbook at reboot with logging"
+        job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
+        special_time: "reboot"
+        state: present
