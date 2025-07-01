@@ -9,7 +9,7 @@
   vars:
     git_repo_url: "https://github.com/truedem0n/homelab.git"
     ansible_playbook_path: "prod/ansible/playbooks/vps.yml"
-    ansible_flag_path: "/ansible/ansible_first_run.flag"
+    ansible_flag_path: "/ansible/vps.flag"
     ansible_user: "skylord"
 
   tasks:
