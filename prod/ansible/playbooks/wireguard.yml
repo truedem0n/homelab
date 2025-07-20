@@ -11,6 +11,9 @@
     wireguard_address: "10.8.0.1/24"
     listen_port: 51820
     external_interface: eth0 # change if not eth0
+    wireguard_server_public_ip: your.public.ip.or.domain
+    wireguard_server_port: 51820
+    wireguard_dns: 1.1.1.1
 
     wireguard_peers:
       - name: phone
@@ -27,6 +30,7 @@
           - wireguard
           - wireguard-tools
           - iptables-persistent
+          - qrencode
         state: present
         update_cache: yes
 
@@ -80,15 +84,79 @@
     - name: Save iptables rules
       command: netfilter-persistent save
 
-    - name: Add WireGuard peers to config
+    - name: Ensure client config directories exist
+      file:
+        path: "/etc/wireguard/clients/{{ item.name }}"
+        state: directory
+        mode: "0700"
+      loop: "{{ wireguard_peers }}"
+
+    - name: Generate client private key
+      command: wg genkey
+      register: client_private_key
+      loop: "{{ wireguard_peers }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: true
+
+    - name: Save client private key
+      copy:
+        dest: "/etc/wireguard/clients/{{ item.name }}/privatekey"
+        content: "{{ client_private_key.results[loop.index0].stdout }}"
+        mode: "0600"
+      loop: "{{ wireguard_peers }}"
+
+    - name: Generate client public key from private key
+      shell: echo "{{ client_private_key.results[loop.index0].stdout }}" | wg pubkey
+      register: client_public_key
+      loop: "{{ wireguard_peers }}"
+      loop_control:
+        label: "{{ item.name }}"
+      changed_when: true
+
+    - name: Save client public key
+      copy:
+        dest: "/etc/wireguard/clients/{{ item.name }}/publickey"
+        content: "{{ client_public_key.results[loop.index0].stdout }}"
+        mode: "0644"
+      loop: "{{ wireguard_peers }}"
+
+    - name: Create WireGuard client config
+      copy:
+        dest: "/etc/wireguard/clients/{{ item.name }}/{{ item.name }}.conf"
+        mode: "0600"
+        content: |
+          [Interface]
+          Address = {{ item.allowed_ip }}
+          PrivateKey = {{ client_private_key.results[loop.index0].stdout }}
+          DNS = {{ wireguard_dns }}
+
+          [Peer]
+          PublicKey = {{ public_key.stdout }}  # server's public key
+          Endpoint = {{ wireguard_server_public_ip }}:{{ wireguard_server_port }}
+          AllowedIPs = 0.0.0.0/0
+          PersistentKeepalive = 25
+      loop: "{{ wireguard_peers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Add WireGuard peers to server config using generated public keys
       blockinfile:
         path: "/etc/wireguard/{{ interface_name }}.conf"
         block: |
           [Peer]
-          PublicKey = {{ item.public_key }}
+          PublicKey = {{ client_public_key.results[loop.index0].stdout }}
           AllowedIPs = {{ item.allowed_ip }}
         marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
       loop: "{{ wireguard_peers }}"
+      loop_control:
+        index_var: index
+        label: "{{ item.name }}"
+
+    - name: Generate QR code for client config
+      shell: "qrencode -t ansiutf8 < /etc/wireguard/clients/{{ item.name }}/{{ item.name }}.conf"
+      loop: "{{ wireguard_peers }}"
+      ignore_errors: true
 
     - name: Restart WireGuard to apply peer changes
       systemd:
