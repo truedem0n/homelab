@@ -103,29 +103,35 @@
       loop: "{{ wireguard_peers }}"
       loop_control:
         label: "{{ item.name }}"
+        index_var: idx
       changed_when: true
 
     - name: Save client private key
       copy:
         dest: "/etc/wireguard/clients/{{ item.name }}/privatekey"
-        content: "{{ client_private_key.results[loop.index0].stdout }}"
+        content: "{{ client_private_key.results[idx].stdout }}"
         mode: "0600"
       loop: "{{ wireguard_peers }}"
+      loop_control:
+        index_var: idx
 
     - name: Generate client public key from private key
-      shell: echo "{{ client_private_key.results[loop.index0].stdout }}" | wg pubkey
+      shell: echo "{{ client_private_key.results[idx].stdout }}" | wg pubkey
       register: client_public_key
       loop: "{{ wireguard_peers }}"
       loop_control:
         label: "{{ item.name }}"
+        index_var: idx
       changed_when: true
 
     - name: Save client public key
       copy:
         dest: "/etc/wireguard/clients/{{ item.name }}/publickey"
-        content: "{{ client_public_key.results[loop.index0].stdout }}"
+        content: "{{ client_public_key.results[idx].stdout }}"
         mode: "0644"
       loop: "{{ wireguard_peers }}"
+      loop_control:
+        index_var: idx
 
     - name: Create WireGuard client config
       copy:
