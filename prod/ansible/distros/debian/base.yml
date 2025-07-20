@@ -52,6 +52,7 @@
           - htop
           - screen
           - neovim
+          - sudo
         state: present
 
     - name: Add user to sudo group
@@ -62,7 +63,7 @@
 
     - name: Configure NOPASSWD sudo access
       lineinfile:
-        path: /etc/sudoers.d/ansible-user
+        path: "/etc/sudoers.d/{{ ansible_user }}"
         state: present
         create: yes
         mode: "0440"
@@ -82,7 +83,7 @@
         job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
-    
+
     - name: Set default editor in .bashrc
       blockinfile:
         path: ~/.bashrc
