@@ -12,6 +12,14 @@
     listen_port: 51820
     external_interface: eth0 # change if not eth0
 
+    wireguard_peers:
+      - name: phone
+        public_key: "CLIENT_PUBLIC_KEY_1"
+        allowed_ip: "10.8.0.2/32"
+      - name: laptop
+        public_key: "CLIENT_PUBLIC_KEY_2"
+        allowed_ip: "10.8.0.3/32"
+
   tasks:
     - name: Install packages
       apt:
@@ -71,3 +79,18 @@
 
     - name: Save iptables rules
       command: netfilter-persistent save
+
+    - name: Add WireGuard peers to config
+      blockinfile:
+        path: "/etc/wireguard/{{ interface_name }}.conf"
+        block: |
+          [Peer]
+          PublicKey = {{ item.public_key }}
+          AllowedIPs = {{ item.allowed_ip }}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+      loop: "{{ wireguard_peers }}"
+
+    - name: Restart WireGuard to apply peer changes
+      systemd:
+        name: "wg-quick@{{ interface_name }}"
+        state: restarted
