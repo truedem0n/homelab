@@ -157,12 +157,12 @@
         path: "/etc/wireguard/{{ interface_name }}.conf"
         block: |
           [Peer]
-          PublicKey = {{ client_public_key.results[loop.index0].stdout }}
+          PublicKey = {{ client_public_key.results[idx].stdout }}
           AllowedIPs = {{ item.allowed_ip }}
         marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
       loop: "{{ wireguard_peers }}"
       loop_control:
-        index_var: index
+        index_var: idx
         label: "{{ item.name }}"
 
     - name: Generate QR code for client config
