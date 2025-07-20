@@ -40,6 +40,12 @@
         state: directory
         mode: "0700"
 
+    - name: Create WireGuard clients directory
+      file:
+        path: /etc/wireguard/clients
+        state: directory
+        mode: "0700"
+
     - name: Generate private key
       command: wg genkey
       register: private_key
