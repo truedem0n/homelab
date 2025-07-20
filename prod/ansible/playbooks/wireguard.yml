@@ -140,7 +140,7 @@
         content: |
           [Interface]
           Address = {{ item.allowed_ip }}
-          PrivateKey = {{ client_private_key.results[loop.index0].stdout }}
+          PrivateKey = {{ client_private_key.results[idx].stdout }}
           DNS = {{ wireguard_dns }}
 
           [Peer]
@@ -151,6 +151,7 @@
       loop: "{{ wireguard_peers }}"
       loop_control:
         label: "{{ item.name }}"
+        index_var: idx
 
     - name: Add WireGuard peers to server config using generated public keys
       blockinfile:
