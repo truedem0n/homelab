@@ -166,10 +166,11 @@
         index_var: idx
         label: "{{ item.name }}"
 
-    - name: Generate QR code for client config
-      shell: "qrencode -t ansiutf8 < /etc/wireguard/clients/{{ item.name }}/{{ item.name }}.conf"
+    - name: Generate ASCII QR code for client config
+      shell: "qrencode -t ansiutf8 < /etc/wireguard/clients/{{ item.name }}/{{ item.name }}.conf > /etc/wireguard/clients/{{ item.name }}/{{ item.name }}-qr.txt"
       loop: "{{ wireguard_peers }}"
-      ignore_errors: true
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Restart WireGuard to apply peer changes
       systemd:
