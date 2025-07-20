@@ -11,7 +11,7 @@
     wireguard_address: "10.8.0.1/24"
     listen_port: 51820
     external_interface: eth0 # change if not eth0
-    wireguard_server_public_ip: your.public.ip.or.domain
+    wireguard_server_public_ip: "{{ lookup('env', 'WIREGUARD_SERVER_PUBLIC_IP') }}"
     wireguard_server_port: 51820
     wireguard_dns: 1.1.1.1
 
