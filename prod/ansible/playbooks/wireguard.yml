@@ -183,5 +183,5 @@
     - name: Deploy python script
       template:
         src: add_peer.py.j2
-        dest: "{{ config_dir }}/add_peer.py"
+        dest: "/etc/wireguard/add_peer.py"
         mode: "0600"
