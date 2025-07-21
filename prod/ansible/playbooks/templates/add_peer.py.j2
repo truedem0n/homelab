@@ -46,8 +46,12 @@ def get_next_ip():
             return str(ip)
     raise RuntimeError("No available IPs left in subnet.")
 
-def generate_client_config(name, client_ip, client_privkey, server_pubkey):
+def generate_client_config(name, client_ip, client_privkey, server_pubkey, full_tunnel=True):
+    allowed_ips = "0.0.0.0/0" if full_tunnel else str(SUBNET)
+    config_type = "Full Tunnel" if full_tunnel else "Split Tunnel"
+
     return f"""
+# {config_type} configuration
 [Interface]
 PrivateKey = {client_privkey}
 Address = {client_ip}/32
@@ -56,7 +60,7 @@ DNS = 1.1.1.1
 [Peer]
 PublicKey = {server_pubkey}
 Endpoint = {SERVER_ENDPOINT}
-AllowedIPs = 0.0.0.0/0
+AllowedIPs = {allowed_ips}
 PersistentKeepalive = 25
 """
 
@@ -70,9 +74,10 @@ AllowedIPs = {client_ip}/32
     with open(WG_CONFIG, "a") as f:
         f.write(peer_config)
 
-def save_client_file(name, config):
+def save_client_file(name, config, suffix):
     os.makedirs(CLIENTS_DIR, exist_ok=True)
-    path = os.path.join(CLIENTS_DIR, f"{name}.conf")
+    filename = f"{name}_{suffix}.conf"
+    path = os.path.join(CLIENTS_DIR, filename)
     with open(path, "w") as f:
         f.write(config.strip())
     return path
@@ -103,17 +108,27 @@ def main():
     print("📦 Writing peer to server config...")
     append_peer_to_server(name, client_pub, client_ip)
 
-    print("📄 Creating client config...")
-    client_config = generate_client_config(name, client_ip, client_priv, server_pub)
-    client_path = save_client_file(name, client_config)
+    # Generate full tunnel config (all traffic via VPN)
+    print("📄 Creating full tunnel client config...")
+    full_tunnel_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=True)
+    full_tunnel_path = save_client_file(name, full_tunnel_config, "full")
+
+    # Generate split tunnel config (only VPN subnet)
+    print("📄 Creating split tunnel client config...")
+    split_tunnel_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=False)
+    split_tunnel_path = save_client_file(name, split_tunnel_config, "split")
 
     if QR_ENABLED:
-        print("📱 QR Code for mobile import:")
-        show_qr(client_path)
+        print("\n📱 QR Code for full tunnel config:")
+        show_qr(full_tunnel_path)
+
+        print("\n📱 QR Code for split tunnel config:")
+        show_qr(split_tunnel_path)
 
     print("🔁 Restarting WireGuard...")
     restart_wireguard()
-    print("✅ Done. Client config: ", client_path)
+
+    print(f"✅ Done.\nClient configs saved:\n - {full_tunnel_path}\n - {split_tunnel_path}")
 
 if __name__ == "__main__":
     main()
