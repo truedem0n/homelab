@@ -3,11 +3,19 @@ import os
 import subprocess
 import ipaddress
 
+def get_public_ip():
+    try:
+        return subprocess.check_output("curl -s https://api.ipify.org", shell=True).decode().strip()
+    except Exception as e:
+        print("❌ Failed to get public IP:", e)
+        return "<unknown>"
+
+SERVER_PORT = 51820
+SERVER_ENDPOINT = f"{get_public_ip()}:{SERVER_PORT}"
 WG_CONFIG = "/etc/wireguard/wg0.conf"
 CLIENTS_DIR = "./clients"
 SUBNET = ipaddress.IPv4Network("10.8.0.0/24")
 SERVER_IP = "10.8.0.1"
-SERVER_ENDPOINT = "<YOUR_PUBLIC_IP>:51820"  # Replace or load from env
 QR_ENABLED = True
 
 def run_cmd(cmd):
