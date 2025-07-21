@@ -1,59 +1,111 @@
 #!/usr/bin/env python3
 import os
 import subprocess
+import ipaddress
 
 WG_CONFIG = "/etc/wireguard/wg0.conf"
 CLIENTS_DIR = "./clients"
+SUBNET = ipaddress.IPv4Network("10.8.0.0/24")
+SERVER_IP = "10.8.0.1"
+SERVER_ENDPOINT = "<YOUR_PUBLIC_IP>:51820"  # Replace or load from env
+QR_ENABLED = True
 
 def run_cmd(cmd):
     return subprocess.check_output(cmd, shell=True).decode().strip()
 
-def generate_keys(name):
+def generate_keys():
     private_key = run_cmd("wg genkey")
     public_key = run_cmd(f"echo '{private_key}' | wg pubkey")
     return private_key, public_key
 
-def add_peer(name, ip):
-    print(f"🔑 Generating keys for {name}...")
-    priv, pub = generate_keys(name)
-    client_ip = f"10.8.0.{ip}/32"
+def find_used_ips():
+    used = set()
+    if not os.path.exists(WG_CONFIG):
+        return used
+    with open(WG_CONFIG) as f:
+        for line in f:
+            if "AllowedIPs" in line:
+                ip = line.split("=")[1].strip().split("/")[0]
+                used.add(ip)
+    return used
 
-    # Append peer to server config
-    peer_conf = f"""
-[Peer]
-# {name}
-PublicKey = {pub}
-AllowedIPs = {client_ip}
-"""
-    with open(WG_CONFIG, "a") as f:
-        f.write(peer_conf)
+def get_next_ip():
+    used_ips = find_used_ips()
+    for ip in SUBNET.hosts():
+        if str(ip) == SERVER_IP:
+            continue
+        if str(ip) not in used_ips:
+            return str(ip)
+    raise RuntimeError("No available IPs left in subnet.")
 
-    print("✅ Peer added to server config.")
-
-    # Generate client config
-    server_pub = open("/etc/wireguard/publickey").read().strip()
-    client_conf = f"""
+def generate_client_config(name, client_ip, client_privkey, server_pubkey):
+    return f"""
 [Interface]
-PrivateKey = {priv}
-Address = {client_ip}
+PrivateKey = {client_privkey}
+Address = {client_ip}/32
 DNS = 1.1.1.1
 
 [Peer]
-PublicKey = {server_pub}
-Endpoint = <YOUR_SERVER_IP>:51820
+PublicKey = {server_pubkey}
+Endpoint = {SERVER_ENDPOINT}
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 """
-    os.makedirs(CLIENTS_DIR, exist_ok=True)
-    with open(f"{CLIENTS_DIR}/{name}.conf", "w") as f:
-        f.write(client_conf.strip())
 
-    print(f"📁 Client config saved: {CLIENTS_DIR}/{name}.conf")
-    print("🔁 Restarting WireGuard...")
+def append_peer_to_server(name, client_pubkey, client_ip):
+    peer_config = f"""
+[Peer]
+# {name}
+PublicKey = {client_pubkey}
+AllowedIPs = {client_ip}/32
+"""
+    with open(WG_CONFIG, "a") as f:
+        f.write(peer_config)
+
+def save_client_file(name, config):
+    os.makedirs(CLIENTS_DIR, exist_ok=True)
+    path = os.path.join(CLIENTS_DIR, f"{name}.conf")
+    with open(path, "w") as f:
+        f.write(config.strip())
+    return path
+
+def show_qr(config_path):
+    try:
+        subprocess.run(["qrencode", "-t", "ansiutf8", "-r", config_path], check=True)
+    except FileNotFoundError:
+        print("⚠️ qrencode not installed. Skipping QR code.")
+
+def restart_wireguard():
     os.system("systemctl restart wg-quick@wg0")
-    print("✅ Done.")
+
+def main():
+    name = input("Enter peer name (no spaces): ").strip()
+    if not name:
+        print("❌ Invalid name.")
+        return
+
+    client_ip = get_next_ip()
+    print(f"🔢 Assigning IP: {client_ip}")
+
+    print("🔑 Generating keys...")
+    client_priv, client_pub = generate_keys()
+
+    server_pub = open("/etc/wireguard/publickey").read().strip()
+
+    print("📦 Writing peer to server config...")
+    append_peer_to_server(name, client_pub, client_ip)
+
+    print("📄 Creating client config...")
+    client_config = generate_client_config(name, client_ip, client_priv, server_pub)
+    client_path = save_client_file(name, client_config)
+
+    if QR_ENABLED:
+        print("📱 QR Code for mobile import:")
+        show_qr(client_path)
+
+    print("🔁 Restarting WireGuard...")
+    restart_wireguard()
+    print("✅ Done. Client config: ", client_path)
 
 if __name__ == "__main__":
-    name = input("Enter peer name (no spaces): ").strip()
-    ip = input("Enter last octet of IP (e.g. 2 for 10.8.0.2): ").strip()
-    add_peer(name, ip)
+    main()
