@@ -41,7 +41,6 @@
       loop:
         - /etc/wireguard
         - /etc/wireguard/clients
-        - /etc/wireguard/publickey
 
     # - name: Get public IP from external service
     #   command: curl -s https://ipinfo.io/ip
