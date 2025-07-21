@@ -61,6 +61,11 @@
         groups: sudo
         append: yes
 
+    - name: Set default shell to bash for user
+      user:
+        name: "{{ ansible_user }}"
+        shell: /bin/bash
+
     - name: Configure NOPASSWD sudo access
       lineinfile:
         path: "/etc/sudoers.d/{{ ansible_user }}"
