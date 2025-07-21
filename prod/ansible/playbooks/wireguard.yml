@@ -180,7 +180,8 @@
     #   loop_control:
     #     label: "{{ item.name }}"
 
-    - name: Restart WireGuard to apply peer changes
-      systemd:
-        name: "wg-quick@{{ interface_name }}"
-        state: restarted
+    - name: Deploy python script
+      template:
+        src: add_peer.py.j2
+        dest: "{{ config_dir }}/add_peer.py"
+        mode: "0600"
