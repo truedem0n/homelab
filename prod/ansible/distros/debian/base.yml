@@ -53,6 +53,7 @@
           - screen
           - neovim
           - sudo
+          - python3
         state: present
 
     - name: Add user to sudo group
