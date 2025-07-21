@@ -33,17 +33,15 @@
         state: present
         update_cache: yes
 
-    - name: Create WireGuard config directory
+    - name: Create WireGuard config and clients directories
       file:
-        path: /etc/wireguard
+        path: "{{ item }}"
         state: directory
         mode: "0700"
-
-    - name: Create WireGuard clients directory
-      file:
-        path: /etc/wireguard/clients
-        state: directory
-        mode: "0700"
+      loop:
+        - /etc/wireguard
+        - /etc/wireguard/clients
+        - /etc/wireguard/publickey
 
     # - name: Get public IP from external service
     #   command: curl -s https://ipinfo.io/ip
