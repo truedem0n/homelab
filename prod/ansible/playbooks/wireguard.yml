@@ -182,3 +182,8 @@
         src: add_peer.py.j2
         dest: "/etc/wireguard/add_peer.py"
         mode: "0600"
+
+    - name: Restart WireGuard to apply peer changes
+      systemd:
+        name: "wg-quick@{{ interface_name }}"
+        state: restarted
