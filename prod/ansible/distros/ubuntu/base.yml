@@ -36,7 +36,7 @@
         - /ansible/
         - /mnt/data
       when: flag_file.stat.exists == false
-    
+
     - name: Create the flag file if it does not exist
       file:
         path: "{{ ansible_flag_path }}"
@@ -70,7 +70,7 @@
         line: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
         validate: "visudo -cf %s"
 
-    - name: Schedule playbook to run every 5 minutes
+    - name: Schedule playbook to run every 5 minutes with logging
       cron:
         name: "Run Ansible playbook every 5 minutes with logging"
         job: "/usr/bin/ansible-pull -v -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
@@ -83,7 +83,7 @@
         job: "/usr/bin/ansible-pull -U {{ git_repo_url }} {{ ansible_playbook_path }} > /var/log/ansible-pull.log 2>&1"
         special_time: "reboot"
         state: present
-    
+
     - name: Set default editor in .bashrc
       blockinfile:
         path: ~/.bashrc
@@ -98,3 +98,31 @@
         job: "/usr/bin/docker system prune -af > /var/log/docker-prune.log 2>&1"
         special_time: "daily"
         state: present
+
+    # 🚫 SSH Hardening
+    - name: Backup current sshd_config
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: /etc/ssh/sshd_config.bak
+        remote_src: yes
+
+    - name: Disable root login in SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PermitRootLogin"
+        line: "PermitRootLogin no"
+        state: present
+        backrefs: yes
+
+    - name: Disable password authentication in SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+        line: "PasswordAuthentication no"
+        state: present
+        backrefs: yes
+
+    - name: Restart SSH to apply config changes
+      service:
+        name: ssh
+        state: restarted
