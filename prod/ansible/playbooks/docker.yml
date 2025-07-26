@@ -1,8 +1,10 @@
 # /usr/bin/ansible-pull -U https://github.com/truedem0n/homelab.git prod/ansible/playbooks/docker.yml
 ---
 - name: Install Docker using official convenience script
-  hosts: docker
+  hosts: localhost
+  connection: local
   become: true
+  gather_facts: true
 
   tasks:
     - name: Install required packages
