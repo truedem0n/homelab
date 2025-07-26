@@ -6,10 +6,15 @@
   become: true
   gather_facts: true
 
-  vars:
-    ansible_user: "{{ ansible_user_id }}"
-
   tasks:
+    - name: Get current user
+      ansible.builtin.command: whoami
+      register: current_user
+
+    - name: Show current user
+      ansible.builtin.debug:
+        msg: "The current user is {{ current_user.stdout }}"
+
     - name: Install required packages
       apt:
         name:
@@ -29,7 +34,7 @@
 
     - name: Add current user to docker group (optional)
       user:
-        name: "{{ ansible_user }}"
+        name: "{{ current_user.stdout }}"
         groups: docker
         append: yes
 
