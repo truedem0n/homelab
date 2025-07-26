@@ -7,7 +7,7 @@
   gather_facts: true
 
   vars:
-    ansible_user: skylord
+    ansible_user: "{ { ansible_user_id } }"
 
   tasks:
     - name: Install required packages
