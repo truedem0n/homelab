@@ -8,7 +8,7 @@
 
   tasks:
     - name: Get current user
-      ansible.builtin.command: whoami
+      ansible.builtin.command: echo "ubuntu"
       register: current_user
 
     - name: Show current user
