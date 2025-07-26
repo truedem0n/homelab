@@ -86,7 +86,7 @@
       template:
         src: add_peer.py.j2
         dest: "/etc/wireguard/add_peer.py"
-        mode: "0600"
+        mode: "0755"
 
     - name: Restart WireGuard to apply peer changes
       systemd:
