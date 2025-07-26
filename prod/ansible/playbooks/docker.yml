@@ -22,6 +22,11 @@
       args:
         executable: /bin/bash
 
+    - name: Create docker group (if it doesn't exist)
+      group:
+        name: docker
+        state: present
+
     - name: Add current user to docker group (optional)
       user:
         name: "{{ ansible_user }}"
@@ -33,3 +38,10 @@
         name: docker
         enabled: true
         state: started
+
+    - name: Warn user to re-login for Docker group to apply
+      debug:
+        msg: |
+          ✅ Docker installed.
+          🔁 Please **log out and log back in** (or reboot)
+          so that '{{ ansible_user }}' can run `docker` without sudo.
