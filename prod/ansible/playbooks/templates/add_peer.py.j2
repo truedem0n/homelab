@@ -97,6 +97,11 @@ def main():
         print("❌ Invalid name.")
         return
 
+    config_choice = input("Which config do you want to generate? (full/split/both) [default: both]: ").strip().lower()
+    if config_choice not in {"full", "split", "both", ""}:
+        print("❌ Invalid choice. Use 'full', 'split', or 'both'.")
+        return
+
     client_ip = get_next_ip()
     print(f"🔢 Assigning IP: {client_ip}")
 
@@ -108,27 +113,32 @@ def main():
     print("📦 Writing peer to server config...")
     append_peer_to_server(name, client_pub, client_ip)
 
-    # Generate full tunnel config (all traffic via VPN)
-    print("📄 Creating full tunnel client config...")
-    full_tunnel_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=True)
-    full_tunnel_path = save_client_file(name, full_tunnel_config, "full")
+    generated_paths = []
 
-    # Generate split tunnel config (only VPN subnet)
-    print("📄 Creating split tunnel client config...")
-    split_tunnel_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=False)
-    split_tunnel_path = save_client_file(name, split_tunnel_config, "split")
+    if config_choice in ("full", "both", ""):
+        print("📄 Creating full tunnel client config...")
+        full_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=True)
+        path = save_client_file(name, full_config, "full")
+        generated_paths.append(("Full Tunnel", path))
+        if QR_ENABLED:
+            print("\n📱 QR Code for full tunnel config:")
+            show_qr(path)
 
-    if QR_ENABLED:
-        print("\n📱 QR Code for full tunnel config:")
-        show_qr(full_tunnel_path)
-
-        print("\n📱 QR Code for split tunnel config:")
-        show_qr(split_tunnel_path)
+    if config_choice in ("split", "both", ""):
+        print("📄 Creating split tunnel client config...")
+        split_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=False)
+        path = save_client_file(name, split_config, "split")
+        generated_paths.append(("Split Tunnel", path))
+        if QR_ENABLED:
+            print("\n📱 QR Code for split tunnel config:")
+            show_qr(path)
 
     print("🔁 Restarting WireGuard...")
     restart_wireguard()
 
-    print(f"✅ Done.\nClient configs saved:\n - {full_tunnel_path}\n - {split_tunnel_path}")
+    print("✅ Done.\nClient configs saved:")
+    for label, path in generated_paths:
+        print(f" - {label}: {path}")
 
 if __name__ == "__main__":
     main()
