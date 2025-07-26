@@ -6,6 +6,9 @@
   become: true
   gather_facts: true
 
+  vars:
+    ansible_user: skylord
+
   tasks:
     - name: Install required packages
       apt:
