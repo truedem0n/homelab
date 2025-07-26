@@ -2,6 +2,8 @@
 import os
 import subprocess
 import ipaddress
+import argparse
+import sys
 
 def get_public_ip():
     try:
@@ -49,7 +51,6 @@ def get_next_ip():
 def generate_client_config(name, client_ip, client_privkey, server_pubkey, full_tunnel=True):
     allowed_ips = "0.0.0.0/0" if full_tunnel else str(SUBNET)
     config_type = "Full Tunnel" if full_tunnel else "Split Tunnel"
-
     return f"""
 # {config_type} configuration
 [Interface]
@@ -91,16 +92,44 @@ def show_qr(config_path):
 def restart_wireguard():
     os.system("systemctl restart wg-quick@wg0")
 
+def list_existing_configs():
+    if not os.path.exists(CLIENTS_DIR):
+        print("❌ No clients directory found.")
+        return
+    print("📁 Available client configs:")
+    for f in os.listdir(CLIENTS_DIR):
+        if f.endswith(".conf"):
+            print(" -", f)
+
 def main():
-    name = input("Enter peer name (no spaces): ").strip()
+    parser = argparse.ArgumentParser(description="WireGuard client config generator")
+    parser.add_argument("--name", help="Peer name (no spaces)")
+    parser.add_argument("--config", choices=["full", "split", "both"], help="Tunnel config type")
+    parser.add_argument("--show", metavar="FILENAME", help="Show QR code for existing config")
+
+    args = parser.parse_args()
+
+    if args.show:
+        config_path = os.path.join(CLIENTS_DIR, args.show)
+        if not os.path.exists(config_path):
+            print("❌ Config not found:", config_path)
+            list_existing_configs()
+            return
+        print(f"📱 Showing QR code for {args.show}...")
+        show_qr(config_path)
+        return
+
+    name = args.name or input("Enter peer name (no spaces): ").strip()
     if not name:
         print("❌ Invalid name.")
         return
 
-    config_choice = input("Which config do you want to generate? (full/split/both) [default: both]: ").strip().lower()
+    config_choice = args.config or input("Which config do you want to generate? (full/split/both) [default: both]: ").strip().lower()
     if config_choice not in {"full", "split", "both", ""}:
         print("❌ Invalid choice. Use 'full', 'split', or 'both'.")
         return
+    if config_choice == "":
+        config_choice = "both"
 
     client_ip = get_next_ip()
     print(f"🔢 Assigning IP: {client_ip}")
@@ -115,7 +144,7 @@ def main():
 
     generated_paths = []
 
-    if config_choice in ("full", "both", ""):
+    if config_choice in ("full", "both"):
         print("📄 Creating full tunnel client config...")
         full_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=True)
         path = save_client_file(name, full_config, "full")
@@ -124,7 +153,7 @@ def main():
             print("\n📱 QR Code for full tunnel config:")
             show_qr(path)
 
-    if config_choice in ("split", "both", ""):
+    if config_choice in ("split", "both"):
         print("📄 Creating split tunnel client config...")
         split_config = generate_client_config(name, client_ip, client_priv, server_pub, full_tunnel=False)
         path = save_client_file(name, split_config, "split")
