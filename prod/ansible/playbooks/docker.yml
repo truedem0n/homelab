@@ -49,4 +49,4 @@
         msg: |
           ✅ Docker installed.
           🔁 Please **log out and log back in** (or reboot)
-          so that '{{ ansible_user }}' can run `docker` without sudo.
+          so that '{{ current_user.stdout }}' can run `docker` without sudo.
