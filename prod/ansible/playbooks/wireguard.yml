@@ -10,17 +10,7 @@
     interface_name: wg0
     wireguard_address: "10.8.0.1/24"
     listen_port: 51820
-    external_interface: eth0 # change if not eth0
-    # wireguard_server_port: 51820
-    # wireguard_dns: 1.1.1.1
-
-    # wireguard_peers:
-    #   - name: phone
-    #     public_key: "CLIENT_PUBLIC_KEY_1"
-    #     allowed_ip: "10.8.0.2/32"
-    #   - name: laptop
-    #     public_key: "CLIENT_PUBLIC_KEY_2"
-    #     allowed_ip: "10.8.0.3/32"
+    external_interface: ens5
 
   tasks:
     - name: Install packages
@@ -41,15 +31,6 @@
       loop:
         - /etc/wireguard
         - /etc/wireguard/clients
-
-    # - name: Get public IP from external service
-    #   command: curl -s https://ipinfo.io/ip
-    #   register: public_ip_result
-    #   changed_when: false
-
-    # - name: Set wireguard_server_public_ip fact
-    #   set_fact:
-    #     wireguard_server_public_ip: "{{ public_ip_result.stdout }}"
 
     - name: Generate private key
       command: wg genkey
@@ -100,88 +81,6 @@
 
     - name: Save iptables rules
       command: netfilter-persistent save
-
-    # - name: Ensure client config directories exist
-    #   file:
-    #     path: "/etc/wireguard/clients/{{ item.name }}"
-    #     state: directory
-    #     mode: "0700"
-    #   loop: "{{ wireguard_peers }}"
-
-    # - name: Generate client private key
-    #   command: wg genkey
-    #   register: client_private_key
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     label: "{{ item.name }}"
-    #     index_var: idx
-    #   changed_when: true
-
-    # - name: Save client private key
-    #   copy:
-    #     dest: "/etc/wireguard/clients/{{ item.name }}/privatekey"
-    #     content: "{{ client_private_key.results[idx].stdout }}"
-    #     mode: "0600"
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     index_var: idx
-
-    # - name: Generate client public key from private key
-    #   shell: echo "{{ client_private_key.results[idx].stdout }}" | wg pubkey
-    #   register: client_public_key
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     label: "{{ item.name }}"
-    #     index_var: idx
-    #   changed_when: true
-
-    # - name: Save client public key
-    #   copy:
-    #     dest: "/etc/wireguard/clients/{{ item.name }}/publickey"
-    #     content: "{{ client_public_key.results[idx].stdout }}"
-    #     mode: "0644"
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     index_var: idx
-
-    # - name: Create WireGuard client config
-    #   copy:
-    #     dest: "/etc/wireguard/clients/{{ item.name }}/{{ item.name }}.conf"
-    #     mode: "0600"
-    #     content: |
-    #       [Interface]
-    #       Address = {{ item.allowed_ip }}
-    #       PrivateKey = {{ client_private_key.results[idx].stdout }}
-    #       DNS = {{ wireguard_dns }}
-
-    #       [Peer]
-    #       PublicKey = {{ public_key.stdout }}  # server's public key
-    #       Endpoint = {{ wireguard_server_public_ip }}:{{ wireguard_server_port }}
-    #       AllowedIPs = 0.0.0.0/0
-    #       PersistentKeepalive = 25
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     label: "{{ item.name }}"
-    #     index_var: idx
-
-    # - name: Add WireGuard peers to server config using generated public keys
-    #   blockinfile:
-    #     path: "/etc/wireguard/{{ interface_name }}.conf"
-    #     block: |
-    #       [Peer]
-    #       PublicKey = {{ client_public_key.results[idx].stdout }}
-    #       AllowedIPs = {{ item.allowed_ip }}
-    #     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     index_var: idx
-    #     label: "{{ item.name }}"
-
-    # - name: Generate ASCII QR code for client config
-    #   shell: "qrencode -t ansiutf8 < /etc/wireguard/clients/{{ item.name }}/{{ item.name }}.conf > /etc/wireguard/clients/{{ item.name }}/{{ item.name }}-qr.txt"
-    #   loop: "{{ wireguard_peers }}"
-    #   loop_control:
-    #     label: "{{ item.name }}"
 
     - name: Deploy python script
       template:
