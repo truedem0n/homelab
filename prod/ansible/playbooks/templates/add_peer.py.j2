@@ -102,10 +102,35 @@ def list_existing_configs():
             print(" -", f)
 
 def main():
-    parser = argparse.ArgumentParser(description="WireGuard client config generator")
-    parser.add_argument("--name", help="Peer name (no spaces)")
-    parser.add_argument("--config", choices=["full", "split", "both"], help="Tunnel config type")
-    parser.add_argument("--show", metavar="FILENAME", help="Show QR code for existing config")
+    parser = argparse.ArgumentParser(
+           description="🛡️ WireGuard Peer Manager - Generate new peer configs or show QR codes.",
+           epilog="""
+   Examples:
+     ./add_peer.py --name alice --config both
+     ./add_peer.py --show alice_full.conf
+
+   Config types:
+     full  - Route all traffic through VPN (0.0.0.0/0)
+     split - Only access internal VPN subnet (e.g., 10.8.0.0/24)
+     both  - Generate both full and split configs
+   """,
+           formatter_class=argparse.RawDescriptionHelpFormatter
+       )
+
+    parser.add_argument(
+        "--name",
+        help="Peer name (used for config file name). Required for config generation."
+    )
+    parser.add_argument(
+        "--config",
+        choices=["full", "split", "both"],
+        help="Type of config to generate. Default is 'both'."
+    )
+    parser.add_argument(
+        "--show",
+        metavar="FILENAME",
+        help="Show QR code for an existing client config file in ./clients/"
+    )
 
     args = parser.parse_args()
 
