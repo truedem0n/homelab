@@ -94,8 +94,8 @@
         - { name: mac_air_at, type: both, expected_suffix: split }
         - { name: nuc, type: both, expected_suffix: split }
         - { name: pc, type: both, expected_suffix: split }
-        - { name: pixel7pro, type: full, expected_suffix: full }
-        - { name: pixel8pro, type: full, expected_suffix: full }
+        - { name: laddu, type: both, expected_suffix: split }
+        - { name: golu, type: both, expected_suffix: split }
         - { name: ser, type: both, expected_suffix: split }
         - { name: serw, type: split, expected_suffix: split }
       register: client_stats
