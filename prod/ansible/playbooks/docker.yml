@@ -7,13 +7,9 @@
   gather_facts: true
 
   tasks:
-    - name: Get current user
-      ansible.builtin.command: echo "ubuntu"
-      register: current_user
-
-    - name: Show current user
-      ansible.builtin.debug:
-        msg: "The current user is {{ current_user.stdout }}"
+    - name: Get list of existing users
+      getent:
+        database: passwd
 
     - name: Install required packages
       apt:
@@ -22,21 +18,35 @@
         state: present
         update_cache: true
 
+    - name: Check if Docker is installed
+      stat:
+        path: /usr/bin/docker
+      register: docker_installed
+
     - name: Download and run Docker install script
       shell: curl -fsSL https://get.docker.com | sh
       args:
         executable: /bin/bash
+      when: not docker_installed.stat.exists
 
     - name: Create docker group (if it doesn't exist)
       group:
         name: docker
         state: present
 
-    - name: Add current user to docker group (optional)
+    - name: Add users to docker group
       user:
-        name: "{{ current_user.stdout }}"
+        name: "{{ item }}"
         groups: docker
         append: yes
+      loop:
+        - skylord
+        - ubuntu
+        - "{{ ansible_env.SUDO_USER | default('') }}"
+      when:
+        - item != ''
+        - item != 'root'
+        - item in getent_passwd
 
     - name: Enable and start Docker service
       systemd:
@@ -47,6 +57,6 @@
     - name: Warn user to re-login for Docker group to apply
       debug:
         msg: |
-          ✅ Docker installed.
+          ✅ Docker installed and configured.
           🔁 Please **log out and log back in** (or reboot)
-          so that '{{ current_user.stdout }}' can run `docker` without sudo.
+          so that changes to the 'docker' group take effect.
