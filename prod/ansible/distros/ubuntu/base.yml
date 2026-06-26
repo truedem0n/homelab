@@ -112,14 +112,83 @@
         special_time: "daily"
         state: present
 
-    # 🔓 SSH Configuration
+    - name: Create SSH directory for skylord
+      file:
+        path: "/home/{{ ansible_user }}/.ssh"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0700"
+
+    - name: Check if skylord already has authorized_keys
+      stat:
+        path: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+      register: skylord_keys
+
+    - name: Generate SSH key pair for skylord
+      command: ssh-keygen -t ed25519 -N "" -f /tmp/skylord_key
+      when: not skylord_keys.stat.exists or skylord_keys.stat.size == 0
+
+    - name: Copy generated public key to skylord authorized_keys
+      copy:
+        src: /tmp/skylord_key.pub
+        dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0600"
+        remote_src: yes
+      when: not skylord_keys.stat.exists or skylord_keys.stat.size == 0
+
+    - name: Read generated private key
+      slurp:
+        src: /tmp/skylord_key
+      register: skylord_private_key_b64
+      when: not skylord_keys.stat.exists or skylord_keys.stat.size == 0
+
+    - name: Copy private key to home directory
+      copy:
+        src: /tmp/skylord_key
+        dest: "/home/{{ ansible_user }}/skylord_key.pem"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0400"
+        remote_src: yes
+      when: not skylord_keys.stat.exists or skylord_keys.stat.size == 0
+
+    - name: Display generated private key (COPY THIS KEY!)
+      debug:
+        msg: |
+          ========================================================================
+          🔑 NEW SSH PRIVATE KEY GENERATED FOR USER: {{ ansible_user }}
+          ========================================================================
+          Please copy the entire private key block below and save it locally
+          as 'skylord_key.pem'.
+
+          {{ skylord_private_key_b64.content | b64decode }}
+
+          ========================================================================
+          Run: chmod 400 skylord_key.pem
+          Connect: ssh -i skylord_key.pem {{ ansible_user }}@<your_server_ip>
+          ========================================================================
+      when: not skylord_keys.stat.exists or skylord_keys.stat.size == 0
+
+    - name: Clean up temporary key files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/skylord_key
+        - /tmp/skylord_key.pub
+      when: not skylord_keys.stat.exists or skylord_keys.stat.size == 0
+
+    # 🚫 SSH Hardening
     - name: Backup current sshd_config
       copy:
         src: /etc/ssh/sshd_config
         dest: /etc/ssh/sshd_config.bak
         remote_src: yes
 
-    - name: Enable root login in SSH
+    - name: Disable root login in SSH
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?PermitRootLogin"
@@ -127,7 +196,7 @@
         state: present
         backrefs: yes
 
-    - name: Enable password authentication in SSH
+    - name: Disable password authentication in SSH
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?PasswordAuthentication"
