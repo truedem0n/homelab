@@ -12,12 +12,12 @@
       register: docker_check
       failed_when: false
       changed_when: false
-      when: (ansible_playbook_filepath | default('')) is search('vps.yml')
+      when: running_via_vps | default(false)
 
     - name: End play if docker is already present and running via VPS playbook
       meta: end_play
       when:
-        - (ansible_playbook_filepath | default('')) is search('vps.yml')
+        - running_via_vps | default(false)
         - docker_check.rc is defined and docker_check.rc == 0
 
     - name: Get list of existing users

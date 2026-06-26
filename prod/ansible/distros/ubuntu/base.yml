@@ -18,12 +18,12 @@
       register: cron_check
       failed_when: false
       changed_when: false
-      when: (ansible_playbook_filepath | default('')) is search('vps.yml')
+      when: running_via_vps | default(false)
 
     - name: End play if cron is already present and running via VPS playbook
       meta: end_play
       when:
-        - (ansible_playbook_filepath | default('')) is search('vps.yml')
+        - running_via_vps | default(false)
         - cron_check.rc is defined and cron_check.rc == 0
 
     - name: Update package cache
