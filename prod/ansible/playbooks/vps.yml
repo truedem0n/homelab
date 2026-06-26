@@ -55,6 +55,7 @@
         - vaultwarden
         - filebrowser_quantum
         - wud
+        - dockge
       register: stack_dirs
 
     - name: Start docker compose stacks if they exist
@@ -77,3 +78,6 @@
 
 # old to new /opt/stacks copy
 # sudo tar -czf - -C /opt stacks | ssh -i key.pem ubuntu@new_server_ip "sudo tar -xzf - -C /opt"
+
+# old to new wg clients ip update
+# sudo sed -i 's/Endpoint = [^:]*:/Endpoint = <NEW_SERVER_IP>:/g' /etc/wireguard/clients/*.conf
