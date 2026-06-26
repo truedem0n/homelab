@@ -68,11 +68,27 @@
           - cron
         state: present
 
-    - name: Add user to sudo group
+    - name: Add user to sudo group and set bash shell
       user:
         name: "{{ ansible_user }}"
         groups: sudo
         append: yes
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Copy bash configuration skeleton files to skylord home
+      copy:
+        src: "/etc/skel/{{ item }}"
+        dest: "/home/{{ ansible_user }}/{{ item }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+        force: no
+        remote_src: yes
+      loop:
+        - .bashrc
+        - .profile
+        - .bash_logout
 
     - name: Configure NOPASSWD sudo access
       lineinfile:
