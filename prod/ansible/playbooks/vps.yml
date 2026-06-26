@@ -3,7 +3,7 @@
 - import_playbook: ../distros/ubuntu/base.yml
 - import_playbook: docker.yml
 
-- name: Install WireGuard via APT
+- name: Install and Configure WireGuard
   hosts: localhost
   connection: local
   become: true
@@ -21,12 +21,54 @@
         path: /etc/wireguard/wg0.conf
       register: wg0_conf
 
+    - name: Fix interface mismatch in existing wg0.conf
+      replace:
+        path: /etc/wireguard/wg0.conf
+        regexp: '-o \S+ -j MASQUERADE'
+        replace: '-o {{ ansible_default_ipv4.interface | default("eth0") }} -j MASQUERADE'
+      when: wg0_conf.stat.exists
+      notify: restart wireguard
+
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        state: present
+        reload: yes
+
     - name: Start and enable WireGuard service
       systemd:
         name: wg-quick@wg0
         enabled: yes
         state: started
       when: wg0_conf.stat.exists
+
+    - name: Check if docker stack directories exist
+      stat:
+        path: "/opt/stacks/{{ item }}"
+      loop:
+        - caddy
+        - backrest
+        - homepage
+        - termix
+        - uptime-kuma
+        - vaultwarden
+        - filebrowser_quantum
+        - wud
+      register: stack_dirs
+
+    - name: Start docker compose stacks if they exist
+      command: docker compose up -d
+      args:
+        chdir: "/opt/stacks/{{ item.item }}"
+      loop: "{{ stack_dirs.results }}"
+      when: item.stat.exists
+
+  handlers:
+    - name: restart wireguard
+      systemd:
+        name: wg-quick@wg0
+        state: restarted
 
 
 
