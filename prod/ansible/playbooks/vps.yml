@@ -2,3 +2,28 @@
 ---
 - import_playbook: ../distros/ubuntu/base.yml
 - import_playbook: docker.yml
+
+- name: Install WireGuard via APT
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+    - name: Install WireGuard and tools
+      apt:
+        name:
+          - wireguard
+          - wireguard-tools
+        state: present
+        update_cache: yes
+
+    - name: Check if wg0.conf exists
+      stat:
+        path: /etc/wireguard/wg0.conf
+      register: wg0_conf
+
+    - name: Start and enable WireGuard service
+      systemd:
+        name: wg-quick@wg0
+        enabled: yes
+        state: started
+      when: wg0_conf.stat.exists
