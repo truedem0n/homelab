@@ -27,3 +27,11 @@
         enabled: yes
         state: started
       when: wg0_conf.stat.exists
+
+
+
+# old to new wireguard conf copy
+# sudo tar -czf - -C /etc wireguard | ssh -i key.pem ubuntu@new_server_ip "sudo tar -xzf - -C /etc"
+
+# old to new /opt/stacks copy
+# sudo tar -czf - -C /opt stacks | ssh -i key.pem ubuntu@new_server_ip "sudo tar -xzf - -C /opt"
