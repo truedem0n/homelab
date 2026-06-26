@@ -13,6 +13,19 @@
     ansible_user: "skylord"
 
   tasks:
+    - name: Check if cron is installed
+      command: which cron
+      register: cron_check
+      failed_when: false
+      changed_when: false
+      when: (ansible_playbook_filepath | default('')) is search('vps.yml')
+
+    - name: End play if cron is already present and running via VPS playbook
+      meta: end_play
+      when:
+        - (ansible_playbook_filepath | default('')) is search('vps.yml')
+        - cron_check.rc is defined and cron_check.rc == 0
+
     - name: Update package cache
       apt:
         update_cache: yes

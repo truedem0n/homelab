@@ -7,6 +7,19 @@
   gather_facts: true
 
   tasks:
+    - name: Check if docker is installed
+      command: which docker
+      register: docker_check
+      failed_when: false
+      changed_when: false
+      when: (ansible_playbook_filepath | default('')) is search('vps.yml')
+
+    - name: End play if docker is already present and running via VPS playbook
+      meta: end_play
+      when:
+        - (ansible_playbook_filepath | default('')) is search('vps.yml')
+        - docker_check.rc is defined and docker_check.rc == 0
+
     - name: Get list of existing users
       getent:
         database: passwd
