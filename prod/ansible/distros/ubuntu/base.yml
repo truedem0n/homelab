@@ -99,26 +99,26 @@
         special_time: "daily"
         state: present
 
-    # 🚫 SSH Hardening
+    # 🔓 SSH Configuration
     - name: Backup current sshd_config
       copy:
         src: /etc/ssh/sshd_config
         dest: /etc/ssh/sshd_config.bak
         remote_src: yes
 
-    - name: Disable root login in SSH
+    - name: Enable root login in SSH
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?PermitRootLogin"
-        line: "PermitRootLogin no"
+        line: "PermitRootLogin yes"
         state: present
         backrefs: yes
 
-    - name: Disable password authentication in SSH
+    - name: Enable password authentication in SSH
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "^#?PasswordAuthentication"
-        line: "PasswordAuthentication no"
+        line: "PasswordAuthentication yes"
         state: present
         backrefs: yes
 
