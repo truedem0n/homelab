@@ -91,6 +91,11 @@
         rule: allow
         from_ip: '10.8.0.0/24'
 
+    - name: Allow all traffic from Docker subnet in UFW
+      ufw:
+        rule: allow
+        from_ip: '172.16.0.0/12'
+
     - name: Configure UFW default forward policy to ACCEPT
       lineinfile:
         path: /etc/default/ufw
