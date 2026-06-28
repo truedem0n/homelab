@@ -33,6 +33,31 @@
       when: wg0_conf.stat.exists
       notify: restart wireguard
 
+    - name: Get public IP of the server
+      uri:
+        url: https://api.ipify.org
+        return_content: yes
+      register: public_ip_lookup
+      failed_when: false
+
+    - name: Set public IP fact
+      set_fact:
+        server_public_ip: "{{ public_ip_lookup.content | default(ansible_default_ipv4.address) | default('127.0.0.1') | trim }}"
+
+    - name: Find client config files
+      find:
+        paths: /etc/wireguard/clients
+        patterns: '*.conf'
+      register: client_files
+
+    - name: Update Endpoint IP in client config files
+      replace:
+        path: "{{ item.path }}"
+        regexp: 'Endpoint = [^:]+:'
+        replace: 'Endpoint = {{ server_public_ip }}:'
+      loop: "{{ client_files.files }}"
+      when: client_files.matched > 0
+
     - name: Enable IP forwarding
       sysctl:
         name: net.ipv4.ip_forward
